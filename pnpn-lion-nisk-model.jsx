@@ -650,7 +650,7 @@ export default function App() {
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
                   <tr style={{borderBottom:`1px solid ${C.border}`}}>
-                    {["#","Hole ID","Sig.Length","Avg CuEq","Peak CuEq","Year","vs Guidance"].map(h=>(
+                    {["#","Hole ID","Sig. Length","Avg CuEq","Peak CuEq","Year","vs Guidance"].map(h=>(
                       <th key={h} style={{color:C.muted,fontSize:11,padding:"5px 10px",textAlign:"left",fontWeight:600}}>{h}</th>
                     ))}
                   </tr>
