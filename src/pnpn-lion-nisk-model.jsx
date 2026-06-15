@@ -55,13 +55,13 @@ const MT_VALS   = [10, 11, 12, 13, 14];
 const CUEQ_VALS = [4.25, 4.75, 5.5, 6.0, 7.0];
 
 // NPV matrix at default prices
-function buildMatrix(p, niskAddon) {
+function buildMatrix(p, niskAddon, rate=0.08) {
   return MT_VALS.map(mt => {
     const row = { mt };
     CUEQ_VALS.forEach(cueq => {
       const capex = 400 + (mt - 10) * 20;
       const lRev = lionRevT(cueq, p);
-      const lNPV = calcNPV(lRev, 28, mt*1e6, capex);
+      const lNPV = calcNPV(lRev, 28, mt*1e6, capex, rate);
       row[cueq] = +(lNPV + niskAddon).toFixed(0);
     });
     return row;
@@ -69,11 +69,11 @@ function buildMatrix(p, niskAddon) {
 }
 
 // Cu price sensitivity at 12Mt / 5.5%
-function buildCuSens(p, niskAddon) {
+function buildCuSens(p, niskAddon, rate=0.08) {
   return [3.00,3.50,4.00,4.50,5.00,5.50,6.00,6.56].map(cu => {
     const pp = {...p, cu};
     const lRev = lionRevT(5.5, pp);
-    const n = calcNPV(lRev, 28, 12e6, 440) + niskAddon;
+    const n = calcNPV(lRev, 28, 12e6, 440, rate) + niskAddon;
     const perSh = n/SHARES_M/0.73;
     return { cu: `$${cu.toFixed(2)}`, npv: +n.toFixed(0), perSh: +perSh.toFixed(2) };
   });
@@ -143,13 +143,14 @@ export default function App() {
   const [selMt, setSelMt] = useState(12);
   const [selCuEq, setSelCuEq] = useState(5.5);
   const [navDiscount, setNavDiscount] = useState(50);
+  const [discountRate, setDiscountRate] = useState(8);
 
-  const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250),[p]);
-  const matrix  = useMemo(()=>buildMatrix(p,niskN),[p,niskN]);
-  const cuSens  = useMemo(()=>buildCuSens(p,niskN),[p,niskN]);
+  const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100),[p,discountRate]);
+  const matrix  = useMemo(()=>buildMatrix(p,niskN,discountRate/100),[p,niskN,discountRate]);
+  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100),[p,niskN,discountRate]);
 
   const selRev  = useMemo(()=>lionRevT(selCuEq,p),[selCuEq,p]);
-  const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20),[selRev,selMt]);
+  const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20,discountRate/100),[selRev,selMt,discountRate]);
   const selTot  = selLNPV + niskN;
   const selPerSh = selTot / SHARES_M / 0.73 * (1 - navDiscount/100); // USD->CAD, risked
 
@@ -334,6 +335,20 @@ export default function App() {
                   <span style={{fontSize:10,color:C.muted}}>$16 (peak)</span>
                 </div>
               </div>
+              <div style={{background:"#0d1a2a",border:`1px solid ${C.sky}44`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>Discount Rate</span>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>{discountRate}%</span>
+                </div>
+                <input type="range" min={6} max={15} step={1} value={discountRate}
+                  onChange={e=>setDiscountRate(+e.target.value)}
+                  style={{width:"100%",accentColor:C.sky}}/>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
+                  <span style={{fontSize:10,color:C.muted}}>6% (producing)</span>
+                  <span style={{fontSize:10,color:C.muted}}>8% (standard)</span>
+                  <span style={{fontSize:10,color:C.muted}}>15% (exploration)</span>
+                </div>
+              </div>
               <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:12,marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                   <span style={{color:C.gold,fontSize:12,fontWeight:700}}>NAV Discount (exploration risk)</span>
@@ -447,7 +462,7 @@ export default function App() {
             </Card>
 
             <Card>
-              <Hdr>NPV Matrix ($M USD) — Lion + Nisk · 8% Discount · 15yr Life</Hdr>
+              <Hdr>NPV Matrix ($M USD) — Lion + Nisk · {discountRate}% Discount · 15yr Life</Hdr>
               <div style={{overflowX:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
                   <thead>
