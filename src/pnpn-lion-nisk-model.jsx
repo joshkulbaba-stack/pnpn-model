@@ -60,9 +60,10 @@ function buildMatrix(p, niskAddon, rate=0.08) {
     const row = { mt };
     CUEQ_VALS.forEach(cueq => {
       const capex = 400 + (mt - 10) * 20;
-      const lRev = lionRevT(cueq, p);
-      const lNPV = calcNPV(lRev, 28, mt*1e6, capex, rate);
-      row[cueq] = +(lNPV + niskAddon).toFixed(0);
+      const lNPV = calcNPV(lionRevT(cueq, p), 28, mt*1e6, capex, rate);
+      row[cueq]        = +(lNPV + niskAddon).toFixed(0);
+      row[`${cueq}_l`] = +lNPV.toFixed(0);
+      row[`${cueq}_n`] = +niskAddon.toFixed(0);
     });
     return row;
   });
@@ -507,17 +508,20 @@ export default function App() {
                       <tr key={row.mt}>
                         <td style={{color:C.copper,fontWeight:700,fontSize:13,padding:"6px 10px"}}>{row.mt}Mt</td>
                         {CUEQ_VALS.map(c=>{
-                          const v=row[c];
+                          const v=row[c], lv=row[`${c}_l`], nv=row[`${c}_n`];
                           const isSelected = row.mt===selMt && Math.abs(c-selCuEq)<0.01;
                           return (
                             <td key={c} onClick={()=>{setSelMt(row.mt);setSelCuEq(c);setTab("mre");}}
                               style={{
                                 background:npvColor(v),
                                 border:isSelected?`2px solid ${C.gold}`:`2px solid transparent`,
-                                borderRadius:6,padding:"10px 14px",textAlign:"center",cursor:"pointer",
+                                borderRadius:6,padding:"8px 10px",textAlign:"center",cursor:"pointer",
                                 transition:"opacity 0.1s",
                               }}>
-                              <div style={{color:"#fff",fontWeight:700,fontSize:14}}>${v.toLocaleString()}M</div>
+                              <div style={{color:"#fff",fontWeight:700,fontSize:13}}>${v.toLocaleString()}M</div>
+                              <div style={{color:"rgba(255,255,255,0.5)",fontSize:9,margin:"3px 0 1px"}}>
+                                Lion ${lv.toLocaleString()}M · Nisk ${nv.toLocaleString()}M
+                              </div>
                               <div style={{color:"rgba(255,255,255,0.6)",fontSize:10}}>
                                 C${(v/SHARES_M/0.73).toFixed(2)}/sh
                               </div>
