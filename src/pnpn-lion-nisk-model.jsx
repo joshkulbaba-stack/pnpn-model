@@ -286,9 +286,11 @@ export default function App() {
                   onChange={e=>setSelCuEq(+e.target.value)}
                   style={{width:"100%",accentColor:C.copper}}/>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                  <span style={{fontSize:10,color:C.muted}}>4.25%</span>
-                  <span style={{fontSize:10,color:"#ff6f00"}}>◄ analyst range ►</span>
-                  <span style={{fontSize:10,color:C.muted}}>7.0%</span>
+                  {[4.25,4.5,4.75,5.0,5.25,5.5,5.75,6.0,6.25,6.5,6.75,7.0].map(v=>(
+                    <span key={v} style={{fontSize:9,color:v===selCuEq?C.copper:"#ff6f00",fontWeight:v===selCuEq?700:400}}>
+                      {v.toFixed(2)}
+                    </span>
+                  ))}
                 </div>
               </div>
 
