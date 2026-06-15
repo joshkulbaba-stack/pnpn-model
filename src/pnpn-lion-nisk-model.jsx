@@ -313,7 +313,7 @@ export default function App() {
                 <Kpi label="Lion NPV (8%)" value={"$"+selLNPV.toFixed(0)} unit="M" color={C.copper} big/>
                 <Kpi label="Combined NPV" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage} big/>
                 <Kpi label="NAV/share (unrisked)" value={"C$"+selPerSh.toFixed(2)} color={C.gold}
-                  sub="225M dil. shares · 0.73 FX"/>
+                  sub="237.2M dil. shares · 0.73 FX"/>
                 <Kpi label="Gross Rev/t (Lion)" value={"$"+selRev.toFixed(0)} unit="USD/t" color={C.copper}
                   sub={"Net $"+(selRev-28).toFixed(0)+"/t after $28 opex"}/>
               </div>
@@ -589,7 +589,7 @@ export default function App() {
               </table>
             </div>
             <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-              ~225M diluted shares · USD/CAD 0.73 · 8% discount · 15yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
+              ~237.2M diluted shares · USD/CAD 0.73 · 8% discount · 15yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
             </div>
           </Card>
         </div>
