@@ -480,6 +480,7 @@ export default function App() {
               <Slider label="Gold (USD/oz)"    field="au"  min={1500} max={4500} step={50}   unit="$"/>
               <Slider label="Nickel (USD/lb)"  field="ni"  min={3}   max={16}   step={0.25} unit="$"/>
               <Slider label="Silver (USD/oz)"  field="ag"  min={10}  max={60}   step={1}    unit="$"/>
+              <Slider label="Platinum (USD/oz)" field="pt" min={400} max={2000} step={25}   unit="$"/>
               <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:6}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Nisk add-on NPV</div>
                 <div style={{color:C.sky,fontWeight:700,fontSize:16}}>${niskN.toFixed(0)}M</div>
