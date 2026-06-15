@@ -312,7 +312,7 @@ export default function App() {
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
                   {[4.25,4.5,4.75,5.0,5.25,5.5,5.75,6.0,6.25,6.5,6.75,7.0].map(v=>(
                     <span key={v} style={{fontSize:9,color:v===selCuEq?C.copper:"#ff6f00",fontWeight:v===selCuEq?700:400}}>
-                      {v.toFixed(2)}
+                      {v.toFixed(2)}%
                     </span>
                   ))}
                 </div>
@@ -356,9 +356,9 @@ export default function App() {
                   onChange={e=>setP(prev=>({...prev,ni:+e.target.value}))}
                   style={{width:"100%",accentColor:C.sky}}/>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                  <span style={{fontSize:10,color:C.muted}}>$3 (depressed)</span>
-                  <span style={{fontSize:10,color:C.muted}}>$7 (current)</span>
-                  <span style={{fontSize:10,color:C.muted}}>$16 (peak)</span>
+                  {[3,4,5,6,7,8,9,10,11,12,13,14,15,16].map(v=>(
+                    <span key={v} style={{fontSize:9,color:p.ni===v?C.sky:C.muted,fontWeight:p.ni===v?700:400}}>${v}</span>
+                  ))}
                 </div>
               </div>
               <div style={{background:"#0d1a2a",border:`1px solid ${C.sky}44`,borderRadius:6,padding:12,marginBottom:12}}>
@@ -370,9 +370,9 @@ export default function App() {
                   onChange={e=>setDiscountRate(+e.target.value)}
                   style={{width:"100%",accentColor:C.sky}}/>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                  <span style={{fontSize:10,color:C.muted}}>6% (producing)</span>
-                  <span style={{fontSize:10,color:C.muted}}>8% (standard)</span>
-                  <span style={{fontSize:10,color:C.muted}}>15% (exploration)</span>
+                  {[6,7,8,9,10,11,12,13,14,15].map(v=>(
+                    <span key={v} style={{fontSize:9,color:discountRate===v?C.sky:C.muted,fontWeight:discountRate===v?700:400}}>{v}%</span>
+                  ))}
                 </div>
               </div>
               <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:12,marginBottom:12}}>
@@ -384,9 +384,9 @@ export default function App() {
                   onChange={e=>setNavDiscount(+e.target.value)}
                   style={{width:"100%",accentColor:C.gold}}/>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                  <span style={{fontSize:10,color:C.muted}}>10% (low risk)</span>
-                  <span style={{fontSize:10,color:C.muted}}>50% (standard)</span>
-                  <span style={{fontSize:10,color:C.muted}}>90% (high risk)</span>
+                  {[10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90].map(v=>(
+                    <span key={v} style={{fontSize:9,color:navDiscount===v?C.gold:C.muted,fontWeight:navDiscount===v?700:400}}>{v}%</span>
+                  ))}
                 </div>
               </div>
               <div style={{background:C.surface,borderRadius:6,padding:12}}>
