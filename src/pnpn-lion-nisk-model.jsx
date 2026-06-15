@@ -312,11 +312,27 @@ export default function App() {
               <Hdr>Scenario Output</Hdr>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
                 <Kpi label="Lion NPV (8%)" value={"$"+selLNPV.toFixed(0)} unit="M" color={C.copper} big/>
-                <Kpi label="Combined NPV" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage} big/>
+                <Kpi label="Nisk NPV (8%)" value={(niskN>=0?"$":"−$")+Math.abs(niskN).toFixed(0)} unit="M" color={niskN>=0?C.sky:"#ef5350"} big
+                  sub={`Ni $${p.ni}/lb · Rev $${niskRevT(p).toFixed(0)}/t vs $55 opex`}/>
+                <Kpi label="Combined NPV" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage}/>
                 <Kpi label={`NAV/share (${navDiscount}% risked)`} value={"C$"+selPerSh.toFixed(2)} color={C.gold}
                   sub="237.2M dil. shares · 0.73 FX"/>
                 <Kpi label="Gross Rev/t (Lion)" value={"$"+selRev.toFixed(0)} unit="USD/t" color={C.copper}
                   sub={"Net $"+(selRev-28).toFixed(0)+"/t after $28 opex"}/>
+              </div>
+              <div style={{background:"#001a1a",border:`1px solid ${C.sky}44`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>Nickel Price (USD/lb)</span>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>${p.ni.toFixed(2)}/lb</span>
+                </div>
+                <input type="range" min={3} max={16} step={0.25} value={p.ni}
+                  onChange={e=>setP(prev=>({...prev,ni:+e.target.value}))}
+                  style={{width:"100%",accentColor:C.sky}}/>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
+                  <span style={{fontSize:10,color:C.muted}}>$3 (depressed)</span>
+                  <span style={{fontSize:10,color:C.muted}}>$7 (current)</span>
+                  <span style={{fontSize:10,color:C.muted}}>$16 (peak)</span>
+                </div>
               </div>
               <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:12,marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
