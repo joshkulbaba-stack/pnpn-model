@@ -142,6 +142,7 @@ export default function App() {
   const [p, setP]         = useState(DEF_P);
   const [selMt, setSelMt] = useState(12);
   const [selCuEq, setSelCuEq] = useState(5.5);
+  const [navDiscount, setNavDiscount] = useState(50);
 
   const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250),[p]);
   const matrix  = useMemo(()=>buildMatrix(p,niskN),[p,niskN]);
@@ -150,7 +151,7 @@ export default function App() {
   const selRev  = useMemo(()=>lionRevT(selCuEq,p),[selCuEq,p]);
   const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20),[selRev,selMt]);
   const selTot  = selLNPV + niskN;
-  const selPerSh = selTot / SHARES_M / 0.73; // USD->CAD
+  const selPerSh = selTot / SHARES_M / 0.73 * (1 - navDiscount/100); // USD->CAD, risked
 
   // Implied grades at selected CuEq
   const impl = {
@@ -312,10 +313,24 @@ export default function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
                 <Kpi label="Lion NPV (8%)" value={"$"+selLNPV.toFixed(0)} unit="M" color={C.copper} big/>
                 <Kpi label="Combined NPV" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage} big/>
-                <Kpi label="NAV/share (unrisked)" value={"C$"+selPerSh.toFixed(2)} color={C.gold}
+                <Kpi label={`NAV/share (${navDiscount}% risked)`} value={"C$"+selPerSh.toFixed(2)} color={C.gold}
                   sub="237.2M dil. shares · 0.73 FX"/>
                 <Kpi label="Gross Rev/t (Lion)" value={"$"+selRev.toFixed(0)} unit="USD/t" color={C.copper}
                   sub={"Net $"+(selRev-28).toFixed(0)+"/t after $28 opex"}/>
+              </div>
+              <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{color:C.gold,fontSize:12,fontWeight:700}}>NAV Discount (exploration risk)</span>
+                  <span style={{color:C.gold,fontSize:12,fontWeight:700}}>{navDiscount}%</span>
+                </div>
+                <input type="range" min={10} max={90} step={5} value={navDiscount}
+                  onChange={e=>setNavDiscount(+e.target.value)}
+                  style={{width:"100%",accentColor:C.gold}}/>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
+                  <span style={{fontSize:10,color:C.muted}}>10% (low risk)</span>
+                  <span style={{fontSize:10,color:C.muted}}>50% (standard)</span>
+                  <span style={{fontSize:10,color:C.muted}}>90% (high risk)</span>
+                </div>
               </div>
               <div style={{background:C.surface,borderRadius:6,padding:12}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:8}}>Contained metal ({selMt}Mt)</div>
@@ -530,7 +545,7 @@ export default function App() {
                     return <div style={{background:C.card,border:`1px solid ${C.border}`,padding:10,borderRadius:6,fontSize:12}}>
                       <div style={{color:C.copper,fontWeight:700}}>Cu {d?.cu}</div>
                       <div style={{color:C.text}}>NPV: ${d?.npv?.toLocaleString()}M</div>
-                      <div style={{color:C.gold}}>NAV: C${d?.perSh}/sh</div>
+                      <div style={{color:C.gold}}>NAV: C${(d?.perSh*(1-navDiscount/100)).toFixed(2)}/sh</div>
                     </div>;
                   }}/>
                   <Line dataKey="npv" name="NPV ($M)" stroke={C.copper} strokeWidth={2.5} dot={{r:4,fill:C.copper}}/>
@@ -550,7 +565,7 @@ export default function App() {
                     label={{value:"Entry C$1.38",fill:C.copper,fontSize:9,position:"insideRight"}}/>
                   <Tooltip formatter={v=>`C$${v}/sh`} contentStyle={{background:C.card,border:`1px solid ${C.border}`}}/>
                   <Bar dataKey="perSh" name="NAV/sh (C$)" radius={[3,3,0,0]}>
-                    {cuSens.map((d,i)=><Cell key={i} fill={d.perSh>10?C.sage:d.perSh>7?C.copper:C.muted}/>)}
+                    {cuSens.map((d,i)=><Cell key={i} fill={d.perSh*(1-navDiscount/100)>10?C.sage:d.perSh*(1-navDiscount/100)>7?C.copper:C.muted}/>)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -580,7 +595,7 @@ export default function App() {
                         <td style={{padding:"6px 12px",color:C.text}}>${lRev.toFixed(0)}/t</td>
                         <td style={{padding:"6px 12px",color:C.sub}}>${(lRev-28).toFixed(0)}/t</td>
                         <td style={{padding:"6px 12px",color:C.sage,fontWeight:700}}>${d.npv.toLocaleString()}M</td>
-                        <td style={{padding:"6px 12px",color:C.gold,fontWeight:700}}>C${d.perSh}</td>
+                        <td style={{padding:"6px 12px",color:C.gold,fontWeight:700}}>C${(d.perSh*(1-navDiscount/100)).toFixed(2)}</td>
                         <td style={{padding:"6px 12px",color:C.sub}}>C${(d.npv/0.73/1000).toFixed(1)}B</td>
                       </tr>
                     );
