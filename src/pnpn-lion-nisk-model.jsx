@@ -201,9 +201,18 @@ export default function App() {
 
   return (
     <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:"'Inter','Segoe UI',sans-serif",fontSize:14}}>
+      <style>{`
+        @media (max-width: 600px) {
+          .pnpn-header { padding: 12px 12px !important; }
+          .pnpn-header h1 { font-size: 15px !important; }
+          .pnpn-header .sub { font-size: 11px !important; }
+          .pnpn-content { padding: 10px !important; }
+          .pnpn-tabs button { padding: 4px 10px !important; font-size: 12px !important; }
+        }
+      `}</style>
 
       {/* HEADER */}
-      <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"18px 24px"}}>
+      <div className="pnpn-header" style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"18px 24px"}}>
         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:14}}>
           <div>
             <div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:"0.1em",marginBottom:4}}>
@@ -222,7 +231,7 @@ export default function App() {
             <Tag c="#ff6f00">Analyst Range</Tag>
           </div>
         </div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        <div className="pnpn-tabs" style={{display:"flex",gap:6,flexWrap:"wrap"}}>
           {TABS.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} style={{
               background:tab===t.id?C.copper:"transparent",
@@ -234,7 +243,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{padding:18,maxWidth:"100%",margin:"0 auto"}}>
+      <div className="pnpn-content" style={{padding:18,maxWidth:"100%",margin:"0 auto"}}>
 
       {/* ══════ MRE RANGE TAB ══════ */}
       {tab==="mre" && (
@@ -242,9 +251,9 @@ export default function App() {
           {/* Range callout */}
           <Card style={{border:`1px solid #ff6f0088`,background:"#1a1000",marginBottom:16}}>
             <div style={{display:"flex",alignItems:"flex-start",gap:20,flexWrap:"wrap"}}>
-              <div style={{flex:1,minWidth:220}}>
+              <div style={{flex:"1 1 220px",minWidth:0}}>
                 <div style={{color:"#ff6f00",fontWeight:800,fontSize:15,marginBottom:6}}>Analyst MRE Guidance</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12}}>
                   <div><div style={{color:C.muted,fontSize:11}}>Tonnage range</div>
                     <div style={{color:C.text,fontSize:22,fontWeight:800}}>10–14 Mt</div></div>
                   <div><div style={{color:C.muted,fontSize:11}}>Grade range (CuEq)</div>
@@ -254,9 +263,9 @@ export default function App() {
                   Actual sig-sample avg from drill data: <span style={{color:C.copper,fontWeight:700}}>8.28% CuEq</span> — guidance represents diluted MRE grade incl. internal waste &amp; halo material.
                 </div>
               </div>
-              <div style={{flex:1,minWidth:220}}>
+              <div style={{flex:"1 1 220px",minWidth:0}}>
                 <div style={{color:C.sub,fontSize:11,fontWeight:700,marginBottom:6}}>ANALYST RANGE BOUNDS</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:6}}>
                   {[["Low End","10Mt @ 4.25%","$1.0B NPV"],["Base","12Mt @ 5.5%","$1.8B NPV"],["High End","14Mt @ 7.0%","$3.0B NPV"]].map(([l,v,n])=>(
                     <div key={l} style={{background:C.card,borderRadius:6,padding:"8px 10px"}}>
                       <div style={{color:C.muted,fontSize:10}}>{l}</div>
@@ -275,7 +284,7 @@ export default function App() {
           </Card>
 
           {/* Interactive scenario picker */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14,marginBottom:14}}>
             <Card>
               <Hdr>Select Your MRE Scenario</Hdr>
               <div style={{marginBottom:12}}>
@@ -314,7 +323,7 @@ export default function App() {
                 <div style={{color:C.muted,fontSize:11,marginBottom:8}}>
                   Implied metal grades (from actual drill data ratios)
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(90px,1fr))",gap:8}}>
                   {[["Cu",impl.cu,"%",C.copper],["Au",impl.au,"g/t",C.gold],
                     ["Pd",impl.pd,"g/t",C.sage],["Ag",impl.ag,"g/t",C.sub]].map(([m,v,u,c])=>(
                     <div key={m}>
@@ -328,7 +337,7 @@ export default function App() {
 
             <Card>
               <Hdr>Scenario Output</Hdr>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:14,marginBottom:14}}>
                 <Kpi label="Lion NPV (8%)" value={"$"+selLNPV.toFixed(0)} unit="M" color={C.copper} big/>
                 <Kpi label="Nisk NPV (8%)" value={(niskN>=0?"$":"−$")+Math.abs(niskN).toFixed(0)} unit="M" color={niskN>=0?C.sky:"#ef5350"} big
                   sub={`Ni $${p.ni}/lb · Rev $${niskRevT(p).toFixed(0)}/t vs $55 opex`}/>
@@ -463,7 +472,7 @@ export default function App() {
       {/* ══════ NPV MATRIX TAB ══════ */}
       {tab==="matrix" && (
         <div>
-          <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:16,marginBottom:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:16}}>
             <Card>
               <Hdr>Metal Prices</Hdr>
               <Slider label="Copper (USD/lb)"  field="cu"  min={2}   max={8}    step={0.05} unit="$"/>
@@ -573,7 +582,7 @@ export default function App() {
             </div>
           </Card>
 
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14,marginBottom:14}}>
             <Card>
               <Hdr>Combined NPV vs. Copper Price — 12Mt @ 5.5% CuEq</Hdr>
               <ResponsiveContainer width="100%" height={260}>
