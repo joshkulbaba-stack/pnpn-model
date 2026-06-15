@@ -172,17 +172,32 @@ export default function App() {
     {id:"data",   label:"Drill Data"},
   ];
 
-  const Slider = ({label,field,min,max,step,unit}) => (
-    <div style={{marginBottom:9}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
-        <span style={{color:C.sub,fontSize:12}}>{label}</span>
-        <span style={{color:C.copper,fontSize:12,fontWeight:700}}>{unit}{p[field].toFixed(field==="cu"||field==="ni"||field==="co"?2:0)}</span>
+  const Slider = ({label,field,min,max,step,unit}) => {
+    const isDecimal = field==="cu"||field==="ni"||field==="co";
+    const ticks = [];
+    for(let v=min; v<=max+0.001; v=+(v+step).toFixed(4)) ticks.push(+v.toFixed(4));
+    const maxTicks = 8;
+    const filtered = ticks.length <= maxTicks ? ticks :
+      ticks.filter((_,i)=>i===0||i===ticks.length-1||i%Math.ceil(ticks.length/maxTicks)===0);
+    return (
+      <div style={{marginBottom:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
+          <span style={{color:C.sub,fontSize:12}}>{label}</span>
+          <span style={{color:C.copper,fontSize:12,fontWeight:700}}>{unit}{p[field].toFixed(isDecimal?2:0)}</span>
+        </div>
+        <input type="range" min={min} max={max} step={step} value={p[field]}
+          onChange={e=>setP(prev=>({...prev,[field]:+e.target.value}))}
+          style={{width:"100%",accentColor:C.copper}}/>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
+          {filtered.map(v=>(
+            <span key={v} style={{fontSize:9,color:p[field]===v?C.copper:C.muted,fontWeight:p[field]===v?700:400}}>
+              {unit}{isDecimal?v.toFixed(2):v}
+            </span>
+          ))}
+        </div>
       </div>
-      <input type="range" min={min} max={max} step={step} value={p[field]}
-        onChange={e=>setP(prev=>({...prev,[field]:+e.target.value}))}
-        style={{width:"100%",accentColor:C.copper}}/>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{background:C.bg,minHeight:"100vh",color:C.text,fontFamily:"'Inter','Segoe UI',sans-serif",fontSize:14}}>
