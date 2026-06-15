@@ -16,7 +16,7 @@ const GRADE_RATIO = { cu: 4.082/AVG_CUEQ, au: 1.075/AVG_CUEQ, pd: 6.721/AVG_CUEQ
 const REC  = { cu:0.85, au:0.80, pd:0.67, ag:0.75, pt:0.67, ni:0.70, co:0.79 };
 const PAY  = { cu:0.90, au:0.95, pd:0.78, ag:0.80, pt:0.78, ni:0.73, co:0.27 };
 const LB=2204.62, OZ=32.1507;
-const SHARES_M = 225; // approx fully diluted
+const SHARES_M = 237.195816; // fully diluted shares (237,195,816)
 
 const DEF_P = { cu:4.50, au:3200, pd:1000, ag:32, pt:950, ni:7.00, co:12.00 };
 
