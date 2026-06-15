@@ -292,12 +292,12 @@ export default function App() {
                   <span style={{color:C.sub,fontSize:12}}>Tonnage</span>
                   <span style={{color:C.copper,fontWeight:700}}>{selMt} Mt</span>
                 </div>
-                <input type="range" min={10} max={14} step={1} value={selMt}
+                <input type="range" min={10} max={14} step={0.5} value={selMt}
                   onChange={e=>setSelMt(+e.target.value)}
                   style={{width:"100%",accentColor:C.copper}}/>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                  {[10,11,12,13,14].map(v=>(
-                    <span key={v} style={{fontSize:10,color:v===selMt?C.copper:C.muted}}>{v}Mt</span>
+                  {[10,10.5,11,11.5,12,12.5,13,13.5,14].map(v=>(
+                    <span key={v} style={{fontSize:9,color:v===selMt?C.copper:C.muted,fontWeight:v===selMt?700:400}}>{v}Mt</span>
                   ))}
                 </div>
               </div>
