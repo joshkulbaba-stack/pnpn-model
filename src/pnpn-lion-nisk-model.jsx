@@ -176,7 +176,7 @@ export default function App() {
     const isDecimal = field==="cu"||field==="ni"||field==="co";
     const ticks = [];
     for(let v=min; v<=max+0.001; v=+(v+step).toFixed(4)) ticks.push(+v.toFixed(4));
-    const maxTicks = 8;
+    const maxTicks = 16;
     const filtered = ticks.length <= maxTicks ? ticks :
       ticks.filter((_,i)=>i===0||i===ticks.length-1||i%Math.ceil(ticks.length/maxTicks)===0);
     return (
@@ -234,7 +234,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{padding:18,maxWidth:1200,margin:"0 auto"}}>
+      <div style={{padding:18,maxWidth:"100%",margin:"0 auto"}}>
 
       {/* ══════ MRE RANGE TAB ══════ */}
       {tab==="mre" && (
