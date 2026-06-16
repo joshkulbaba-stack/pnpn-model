@@ -13,7 +13,7 @@ const RAW = {"lion":{"stats":{"total_holes":91,"assay_rows":9878,"sig_rows":533,
 // avg CuEq 8.282% → Cu 4.082%, Au 1.075g/t, Pd 6.721g/t, Ag 30.5g/t
 const AVG_CUEQ = 8.282;
 const GRADE_RATIO = { cu: 4.082/AVG_CUEQ, au: 1.075/AVG_CUEQ, pd: 6.721/AVG_CUEQ, ag: 30.545/AVG_CUEQ, pt: 0.3/AVG_CUEQ };
-const REC  = { cu:0.85, au:0.80, pd:0.67, ag:0.75, pt:0.67, ni:0.70, co:0.79 };
+const REC  = { cu:0.989, au:0.850, pd:0.939, ag:0.889, pt:0.968, ni:0.771, co:0.79 }; // SGS LCT Jan 2026
 const PAY  = { cu:0.90, au:0.95, pd:0.78, ag:0.80, pt:0.78, ni:0.73, co:0.27 };
 const LB=2204.62, OZ=32.1507;
 const SHARES_M = 237.195816; // fully diluted shares (237,195,816)
