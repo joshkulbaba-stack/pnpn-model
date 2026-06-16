@@ -13,7 +13,10 @@ const RAW = {"lion":{"stats":{"total_holes":91,"assay_rows":9878,"sig_rows":533,
 // avg CuEq 8.282% → Cu 4.082%, Au 1.075g/t, Pd 6.721g/t, Ag 30.5g/t
 const AVG_CUEQ = 8.282;
 const GRADE_RATIO = { cu: 4.082/AVG_CUEQ, au: 1.075/AVG_CUEQ, pd: 6.721/AVG_CUEQ, ag: 30.545/AVG_CUEQ, pt: 0.3/AVG_CUEQ };
-const REC  = { cu:0.989, au:0.850, pd:0.939, ag:0.889, pt:0.968, ni:0.771, co:0.79 }; // SGS LCT Jan 2026
+// Lion: SGS LCT Jan 2026 testwork results
+const REC_LION = { cu:0.989, au:0.850, pd:0.939, ag:0.889, pt:0.968, ni:0.771, co:0.79 };
+// Nisk: no met testwork yet — conservative generic estimates
+const REC_NISK = { cu:0.85,  au:0.80,  pd:0.67,  ag:0.75,  pt:0.67,  ni:0.70,  co:0.79 };
 const PAY  = { cu:0.90, au:0.95, pd:0.78, ag:0.80, pt:0.78, ni:0.73, co:0.27 };
 const LB=2204.62, OZ=32.1507;
 const SHARES_M = 237.195816; // fully diluted shares (237,195,816)
@@ -21,26 +24,25 @@ const SHARES_M = 237.195816; // fully diluted shares (237,195,816)
 const DEF_P = { cu:4.50, au:3200, pd:1000, ag:32, pt:950, ni:7.00, co:12.00 };
 
 function lionRevT(cueq, p) {
-  // Decompose CuEq into constituent metals using actual data ratios
   const cu  = cueq * GRADE_RATIO.cu;
   const au  = cueq * GRADE_RATIO.au;
   const pd  = cueq * GRADE_RATIO.pd;
   const ag  = cueq * GRADE_RATIO.ag;
   const pt  = cueq * GRADE_RATIO.pt;
   return (
-    cu/100*LB*p.cu*REC.cu*PAY.cu +
-    au/OZ*p.au*REC.au*PAY.au +
-    pd/OZ*p.pd*REC.pd*PAY.pd +
-    ag/OZ*p.ag*REC.ag*PAY.ag +
-    pt/OZ*p.pt*REC.pt*PAY.pt
+    cu/100*LB*p.cu*REC_LION.cu*PAY.cu +
+    au/OZ*p.au*REC_LION.au*PAY.au +
+    pd/OZ*p.pd*REC_LION.pd*PAY.pd +
+    ag/OZ*p.ag*REC_LION.ag*PAY.ag +
+    pt/OZ*p.pt*REC_LION.pt*PAY.pt
   );
 }
 function niskRevT(p) {
   return (
-    0.764/100*LB*p.ni*REC.ni*PAY.ni +
-    0.394/100*LB*p.cu*REC.cu*PAY.cu +
-    0.048/100*LB*p.co*REC.co*PAY.co +
-    0.705/OZ*p.pd*REC.pd*PAY.pd
+    0.764/100*LB*p.ni*REC_NISK.ni*PAY.ni +
+    0.394/100*LB*p.cu*REC_NISK.cu*PAY.cu +
+    0.048/100*LB*p.co*REC_NISK.co*PAY.co +
+    0.705/OZ*p.pd*REC_NISK.pd*PAY.pd
   );
 }
 function calcNPV(revT, opex, tonnes, capexM, rate=0.08, life=15) {
