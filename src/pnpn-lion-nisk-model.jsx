@@ -173,6 +173,7 @@ export default function App() {
     {id:"matrix", label:"NPV Matrix"},
     {id:"pxsens", label:"Cu Price Sens."},
     {id:"data",   label:"Drill Data"},
+    {id:"assumptions", label:"Assumptions"},
   ];
 
   const Slider = ({label,field,min,max,step,unit}) => {
@@ -757,6 +758,180 @@ export default function App() {
               "Sig. Length" = total metres ≥1% CuEq within each hole. Composite grade is length-weighted average over those intervals. All 25 holes exceed the analyst guidance low of 4.25% CuEq at the hole level.
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* ══════ ASSUMPTIONS TAB ══════ */}
+      {tab==="assumptions" && (
+        <div>
+
+          {/* Recoveries */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14,marginBottom:14}}>
+            <Card>
+              <Hdr>Lion Zone Recoveries — SGS Locked Cycle Test (Jan 2026)</Hdr>
+              <div style={{background:"#001a0a",border:`1px solid ${C.sage}44`,borderRadius:6,padding:10,marginBottom:12,fontSize:12,color:C.sub,lineHeight:1.6}}>
+                Blended composite (50/50 HG/LG), 103+99 samples from 25 drill holes.
+                Concentrate grade: 25.8% Cu · 41.4 g/t Pd · 23.4 g/t Pt · 4.83 g/t Au · 159 g/t Ag · 1.2% Ni
+              </div>
+              <table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead>
+                  <tr style={{borderBottom:`1px solid ${C.border}`}}>
+                    {["Metal","Feed Grade","Recovery"].map(h=>(
+                      <th key={h} style={{color:C.muted,fontSize:11,padding:"5px 10px",textAlign:"left",fontWeight:600}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["Cu","3.42%",  REC_LION.cu*100, C.copper],
+                    ["Pd","5.37 g/t", REC_LION.pd*100, C.sage],
+                    ["Pt","2.90 g/t", REC_LION.pt*100, C.sage],
+                    ["Au","0.70 g/t", REC_LION.au*100, C.gold],
+                    ["Ag","24.9 g/t", REC_LION.ag*100, C.sub],
+                    ["Ni","0.20%",  REC_LION.ni*100, C.sky],
+                    ["Co","—",      REC_LION.co*100, C.muted],
+                  ].map(([m,feed,rec,c],i)=>(
+                    <tr key={m} style={{background:i%2===1?C.surface+"55":"transparent",borderBottom:`1px solid ${C.border}18`}}>
+                      <td style={{padding:"6px 10px",color:c,fontWeight:700}}>{m}</td>
+                      <td style={{padding:"6px 10px",color:C.sub,fontSize:12}}>{feed}</td>
+                      <td style={{padding:"6px 10px"}}>
+                        <span style={{color:c,fontWeight:700,fontSize:13}}>{rec.toFixed(1)}%</span>
+                        {m==="Co"&&<span style={{color:C.muted,fontSize:10}}> (est — no testwork)</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+
+            <Card>
+              <Hdr>Nisk Recoveries — Generic Estimates (No Testwork Yet)</Hdr>
+              <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:10,marginBottom:12,fontSize:12,color:C.sub,lineHeight:1.6}}>
+                No metallurgical testwork completed on Nisk to date. Conservative peer-comparable estimates used pending a future met study.
+              </div>
+              <table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead>
+                  <tr style={{borderBottom:`1px solid ${C.border}`}}>
+                    {["Metal","Recovery","vs Lion"].map(h=>(
+                      <th key={h} style={{color:C.muted,fontSize:11,padding:"5px 10px",textAlign:"left",fontWeight:600}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["Cu",  REC_NISK.cu*100, REC_LION.cu*100, C.copper],
+                    ["Pd",  REC_NISK.pd*100, REC_LION.pd*100, C.sage],
+                    ["Pt",  REC_NISK.pt*100, REC_LION.pt*100, C.sage],
+                    ["Au",  REC_NISK.au*100, REC_LION.au*100, C.gold],
+                    ["Ag",  REC_NISK.ag*100, REC_LION.ag*100, C.sub],
+                    ["Ni",  REC_NISK.ni*100, REC_LION.ni*100, C.sky],
+                    ["Co",  REC_NISK.co*100, REC_LION.co*100, C.muted],
+                  ].map(([m,rec,lionRec,c],i)=>{
+                    const diff = rec - lionRec;
+                    return (
+                      <tr key={m} style={{background:i%2===1?C.surface+"55":"transparent",borderBottom:`1px solid ${C.border}18`}}>
+                        <td style={{padding:"6px 10px",color:c,fontWeight:700}}>{m}</td>
+                        <td style={{padding:"6px 10px",color:C.text,fontWeight:700,fontSize:13}}>{rec.toFixed(1)}%</td>
+                        <td style={{padding:"6px 10px",fontSize:11,color:diff<0?"#ef5350":C.muted}}>
+                          {diff<0?diff.toFixed(1)+"pp":"+0"} vs Lion
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+
+          {/* Payabilities */}
+          <Card style={{marginBottom:14}}>
+            <Hdr>Smelter Payabilities — Applied to Both Deposits</Hdr>
+            <div style={{color:C.muted,fontSize:12,marginBottom:12,lineHeight:1.6}}>
+              Payabilities represent the fraction of recovered metal the smelter/refinery actually pays for, after deductions. These are industry-standard estimates — actual terms depend on future offtake negotiations. SGS noted potential for value-added processing (battery materials, advanced manufacturing) which could improve these significantly.
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:10}}>
+              {[["Cu",PAY.cu,C.copper],["Au",PAY.au,C.gold],["Pd",PAY.pd,C.sage],
+                ["Pt",PAY.pt,C.sage],["Ag",PAY.ag,C.sub],["Ni",PAY.ni,C.sky],["Co",PAY.co,C.muted]].map(([m,v,c])=>(
+                <div key={m} style={{background:C.card,borderRadius:6,padding:"10px",textAlign:"center"}}>
+                  <div style={{color:C.muted,fontSize:11,marginBottom:4}}>{m}</div>
+                  <div style={{color:c,fontWeight:700,fontSize:18}}>{(v*100).toFixed(0)}%</div>
+                  <div style={{color:C.muted,fontSize:10,marginTop:2}}>payability</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Mining cost assumptions */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14,marginBottom:14}}>
+            <Card>
+              <Hdr>Lion Zone — Mining Cost Assumptions</Hdr>
+              <div style={{color:C.muted,fontSize:12,marginBottom:12}}>Open pit. Analyst estimates — no PEA published.</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                {[
+                  ["OPEX","$28/t","milled"],
+                  ["CAPEX (base)","$400M","at 10 Mt"],
+                  ["CAPEX scaling","+$20M/Mt","over 10 Mt"],
+                  ["CAPEX (12 Mt)","$440M","illustrative"],
+                  ["CAPEX (14 Mt)","$480M","illustrative"],
+                  ["Mine life","15 years","assumed"],
+                ].map(([l,v,sub])=>(
+                  <div key={l} style={{background:C.surface,borderRadius:6,padding:"10px 12px"}}>
+                    <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
+                    <div style={{color:C.copper,fontWeight:700,fontSize:15}}>{v}</div>
+                    <div style={{color:C.muted,fontSize:10}}>{sub}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card>
+              <Hdr>Nisk — Mining Cost Assumptions</Hdr>
+              <div style={{color:C.muted,fontSize:12,marginBottom:12}}>Underground. Analyst estimates — no PEA published.</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                {[
+                  ["OPEX","$55/t","milled (UG premium)"],
+                  ["CAPEX","$250M","fixed"],
+                  ["Tonnes","5.43 Mt","resource estimate"],
+                  ["Mine life","15 years","assumed"],
+                  ["Ni grade","0.764%","avg significant"],
+                  ["Cu grade","0.394%","avg significant"],
+                ].map(([l,v,sub])=>(
+                  <div key={l} style={{background:C.surface,borderRadius:6,padding:"10px 12px"}}>
+                    <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
+                    <div style={{color:C.sky,fontWeight:700,fontSize:15}}>{v}</div>
+                    <div style={{color:C.muted,fontSize:10}}>{sub}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* Model-wide assumptions */}
+          <Card>
+            <Hdr>Model-Wide Assumptions</Hdr>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
+              {[
+                ["Diluted Shares","237.2M","fully diluted"],
+                ["USD/CAD FX","0.73","for NAV/share"],
+                ["Discount Rate","8% default","adjustable 6–15%"],
+                ["NAV Discount","50% default","adjustable 10–90%"],
+                ["Lion Opex basis","$/t milled","open pit"],
+                ["Nisk Opex basis","$/t milled","underground"],
+                ["Grade ratios","actual drill data","9,878 assay records"],
+                ["Met study","SGS LCT Jan 2026","Lion only"],
+              ].map(([l,v,sub])=>(
+                <div key={l} style={{background:C.surface,borderRadius:6,padding:"10px 12px"}}>
+                  <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
+                  <div style={{color:C.text,fontWeight:700,fontSize:13}}>{v}</div>
+                  <div style={{color:C.muted,fontSize:10}}>{sub}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:14,padding:12,background:"#0d1117",borderRadius:6,border:`1px solid ${C.border}`,fontSize:12,color:C.muted,lineHeight:1.7}}>
+              <strong style={{color:C.text}}>Disclaimer:</strong> This model is for informational purposes only and does not constitute investment advice. All assumptions are analyst estimates unless otherwise noted. No PEA, PFS, or feasibility study has been published for the Lion or Nisk deposits. Actual results will differ materially from modelled scenarios.
+            </div>
+          </Card>
+
         </div>
       )}
 
