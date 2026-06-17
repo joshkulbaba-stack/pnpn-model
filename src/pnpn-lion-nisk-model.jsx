@@ -230,6 +230,9 @@ export default function App() {
             <div style={{color:C.sub,fontSize:12,marginTop:3}}>
               Calibrated from 9,878 Lion Zone assay records · Inaugural MRE expected Q3 2026
             </div>
+            <div style={{color:C.muted,fontSize:11,marginTop:4}}>
+              Data last updated: <span style={{color:C.copper,fontWeight:600}}>June 16, 2026</span>
+            </div>
           </div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
             <Tag c={C.copper}>Lion CuEq</Tag>
