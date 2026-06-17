@@ -84,16 +84,6 @@ function buildCuSens(p, niskAddon, rate=0.08, life=15, shares=306, fx=0.73) {
   });
 }
 
-// Grade distribution from raw drill intervals — directional only, not a resource model
-const COG_DATA = [
-  {cog:"0%",   tonnes:100,  grade:0.84},
-  {cog:"0.5%", tonnes:71.2, grade:1.17},
-  {cog:"1%",   tonnes:56.4, grade:1.47},
-  {cog:"2%",   tonnes:42.1, grade:1.95},
-  {cog:"3%",   tonnes:33.5, grade:2.58},
-  {cog:"4%",   tonnes:25.8, grade:3.42},
-  {cog:"5%",   tonnes:19.5, grade:5.21},
-];
 
 // Catalyst timeline data
 const CATALYSTS = [
@@ -316,7 +306,6 @@ export default function App() {
     {id:"pxsens",    label:"Cu Price Sens."},
     {id:"data",      label:"Drill Data"},
     {id:"assumptions", label:"Assumptions"},
-    {id:"cutoff",    label:"Grade Distribution"},
     {id:"catalyst",  label:"Catalysts"},
     {id:"news",      label:"News Log"},
     {id:"capexsens", label:"CAPEX/OPEX Sens."},
@@ -1359,67 +1348,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ══════ CUT-OFF SENSITIVITY TAB ══════ */}
-      {tab==="cutoff" && (
-        <div>
-          <Card style={{marginBottom:14,background:"#001a10",border:`1px solid ${C.sage}44`}}>
-            <div style={{color:C.sage,fontWeight:700,fontSize:13,marginBottom:6}}>Drill Interval Grade Distribution — Lion Zone</div>
-            <div style={{color:C.sub,fontSize:12,lineHeight:1.65}}>
-              Illustrative grade distribution based on raw drill intervals — <strong style={{color:C.sage}}>not a resource model</strong>. Shows how the proportion of drill metres and average CuEq shift at different grade thresholds. Absolute percentages are directional only — a proper cut-off sensitivity requires a 3D block model, density estimates, and domain constraints. Use the MRE Range tab for resource scenario analysis.
-            </div>
-          </Card>
-          <Card style={{marginBottom:14}}>
-            <Hdr>Grade Threshold vs. % Drill Metres &amp; Avg CuEq — Illustrative</Hdr>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={COG_DATA} margin={{top:10,right:60,left:10,bottom:20}}>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
-                <XAxis dataKey="cog" tick={{fill:C.sub,fontSize:11}}
-                  label={{value:"Cut-off Grade",fill:C.muted,fontSize:11,position:"insideBottom",offset:-12}}/>
-                <YAxis yAxisId="left" tick={{fill:C.sub,fontSize:11}} unit="%" domain={[0,110]}
-                  label={{value:"% Metres Remaining",fill:C.muted,fontSize:10,angle:-90,position:"insideLeft"}}/>
-                <YAxis yAxisId="right" orientation="right" tick={{fill:C.sage,fontSize:11}} unit="%"
-                  label={{value:"Avg CuEq %",fill:C.sage,fontSize:10,angle:90,position:"insideRight"}}/>
-                <Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`}}
-                  formatter={(v,name)=>name==="Avg CuEq %"?[v.toFixed(2)+"%",name]:[v.toFixed(1)+"%",name]}/>
-                <Legend wrapperStyle={{fontSize:11}}/>
-                <Bar yAxisId="left" dataKey="tonnes" name="% Metres Remaining" fill={C.copper} radius={[3,3,0,0]} opacity={0.85}/>
-                <Bar yAxisId="right" dataKey="grade" name="Avg CuEq %" fill={C.sage} radius={[3,3,0,0]} opacity={0.75}/>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-          <Card>
-            <Hdr>Grade Threshold Table</Hdr>
-            <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead>
-                  <tr style={{borderBottom:`1px solid ${C.border}`}}>
-                    {["Grade Threshold","% Drill Metres","Avg CuEq Grade","Notes"].map(h=>(
-                      <th key={h} style={{color:C.muted,fontSize:11,padding:"6px 12px",textAlign:"left",fontWeight:600}}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {COG_DATA.map((d,i)=>(
-                    <tr key={d.cog} style={{background:i%2===1?C.surface+"55":"transparent",borderBottom:`1px solid ${C.border}22`}}>
-                      <td style={{padding:"6px 12px",color:C.copper,fontWeight:700}}>{d.cog}</td>
-                      <td style={{padding:"6px 12px",color:C.text,fontWeight:700}}>{d.tonnes.toFixed(1)}%</td>
-                      <td style={{padding:"6px 12px",color:C.sage,fontWeight:700}}>{d.grade.toFixed(2)}%</td>
-                      <td style={{padding:"6px 12px",color:C.muted,fontSize:11}}>
-                        {d.cog==="0%" ? "All material, incl. sub-grade" :
-                         d.cog==="1%" ? "Typical economic cut-off for open pit" :
-                         d.cog==="3%" ? "High-grade core" : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-              Raw drill interval data only — not a substitute for a NI 43-101 resource estimate. Directional trends are valid; absolute numbers are not. MRE expected Q3 2026.
-            </div>
-          </Card>
-        </div>
-      )}
 
       {/* ══════ CATALYST TIMELINE TAB ══════ */}
       {tab==="catalyst" && (
