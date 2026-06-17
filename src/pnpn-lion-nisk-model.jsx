@@ -206,23 +206,27 @@ export default function App() {
     const tryQuote = (hi, pi) => {
       if(hi>=yahooHosts.length) return Promise.reject("all yahoo hosts failed");
       if(pi>=yahooProxies.length) return tryQuote(hi+1, 0);
-      const url = `https://${yahooHosts[hi]}/v8/finance/chart/PNPN.V?interval=1d&range=1d`;
+      const url = `https://${yahooHosts[hi]}/v8/finance/chart/PNPN.V?interval=1d&range=5d`;
       return fetch(yahooProxies[pi](url))
         .then(r=>r.json())
         .then(w=>{
           const raw = typeof w==="string"?w:(w.contents||"");
           const data = JSON.parse(raw);
-          const meta = data?.chart?.result?.[0]?.meta;
+          const result = data?.chart?.result?.[0];
+          const meta = result?.meta;
           if(!meta?.regularMarketPrice) throw new Error("no price");
-          const prev = meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice;
+          // Use last two daily closes from the time series for accurate day-over-day change
+          const closes = result?.indicators?.quote?.[0]?.close?.filter(v=>v!=null) ?? [];
+          const price = meta.regularMarketPrice;
+          const prev = closes.length>=2 ? closes[closes.length-2] : (meta.chartPreviousClose ?? meta.previousClose ?? price);
           setQuote({
-            regularMarketPrice: meta.regularMarketPrice,
+            regularMarketPrice: price,
             regularMarketVolume: meta.regularMarketVolume,
             regularMarketDayHigh: meta.regularMarketDayHigh,
             regularMarketDayLow: meta.regularMarketDayLow,
             regularMarketPreviousClose: prev,
-            regularMarketChange: meta.regularMarketPrice - prev,
-            regularMarketChangePercent: ((meta.regularMarketPrice - prev) / prev) * 100,
+            regularMarketChange: price - prev,
+            regularMarketChangePercent: prev ? ((price - prev) / prev) * 100 : 0,
             bid: null, ask: null,
           });
         })
