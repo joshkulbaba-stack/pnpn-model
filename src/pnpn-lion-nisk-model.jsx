@@ -234,7 +234,7 @@ export default function App() {
               Calibrated from 9,878 Lion Zone assay records · Inaugural MRE expected Q3 2026
             </div>
             <div style={{color:C.muted,fontSize:11,marginTop:4}}>
-              Data last updated: <span style={{color:C.copper,fontWeight:600}}>June 16, 2026</span>
+              Data last updated: <span style={{color:C.copper,fontWeight:600}}>{new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</span>
             </div>
           </div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
