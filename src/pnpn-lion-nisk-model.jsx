@@ -234,42 +234,13 @@ export default function App() {
     };
     tryQuote(0,0).catch(()=>{});
 
-    // Scrape powermetallic.com/news/ — try multiple proxies in sequence
+    // Fetch news via Vercel serverless function (no CORS issues)
     setNewsFetching(true);
-    const newsUrl = "https://www.powermetallic.com/news/";
-    const proxies = [
-      u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-      u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    ];
-    const parseNews = (html) => {
-      // Structure: <a href="/long-slug-here/">Headline text here</a>
-      const re = /<a\s+href="(\/[a-z0-9][a-z0-9_-]{15,}\/?)"[^>]*>\s*([^<]{20,300}?)\s*<\/a>/gi;
-      const items = [], seen = new Set();
-      let m;
-      while((m=re.exec(html))!==null && items.length<15){
-        const path = m[1].endsWith("/")?m[1]:m[1]+"/";
-        const headline = m[2].replace(/\s+/g," ").trim();
-        if(!seen.has(path) && !/\/(news|contact|about|team|projects|investors|home|media|search)\/?$/i.test(path)){
-          seen.add(path);
-          items.push({headline, url:"https://www.powermetallic.com"+path});
-        }
-      }
-      return items;
-    };
-    const tryProxy = (i) => {
-      if(i>=proxies.length) return Promise.reject("all proxies failed");
-      return fetch(proxies[i](newsUrl))
-        .then(r=>r.json())
-        .then(w=>{
-          // allorigins wraps in {contents}, codetabs returns raw text
-          const html = typeof w === "string" ? w : (w.contents||"");
-          const items = parseNews(html);
-          if(items.length===0) throw new Error("no items parsed");
-          setLiveNews(items);
-        })
-        .catch(()=>tryProxy(i+1));
-    };
-    tryProxy(0).catch(()=>{}).finally(()=>setNewsFetching(false));
+    fetch('/api/news')
+      .then(r=>r.json())
+      .then(data=>{ if(data.items?.length) setLiveNews(data.items); })
+      .catch(()=>{})
+      .finally(()=>setNewsFetching(false));
   },[]);
 
   const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
