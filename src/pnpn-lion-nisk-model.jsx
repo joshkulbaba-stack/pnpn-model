@@ -196,9 +196,12 @@ export default function App() {
 
   useEffect(()=>{
     setPriceFetching(true);
-    fetch("https://query1.finance.yahoo.com/v8/finance/chart/PNPN.V?interval=1d&range=1d")
+    const url = "https://query1.finance.yahoo.com/v8/finance/chart/PNPN.V?interval=1d&range=1d";
+    const proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+    fetch(proxy)
       .then(r=>r.json())
-      .then(data=>{
+      .then(wrapper=>{
+        const data = JSON.parse(wrapper.contents);
         const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
         if(price) setLivePrice(price);
       })
