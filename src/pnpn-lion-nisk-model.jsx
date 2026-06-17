@@ -191,8 +191,8 @@ export default function App() {
   const [fx, setFx] = useState(0.73);
   const [quote, setQuote] = useState(null);
   const livePrice = quote?.regularMarketPrice ?? null;
-  const [raiseAmtInput, setRaiseAmtInput] = useState("50");
-  const [raisePriceInput, setRaisePriceInput] = useState("2.00");
+  const [raiseAmtInput, setRaiseAmtInput] = useState("");
+  const [raisePriceInput, setRaisePriceInput] = useState("");
   const [liveNews, setLiveNews] = useState([]);
   const [newsFetching, setNewsFetching] = useState(false);
 
