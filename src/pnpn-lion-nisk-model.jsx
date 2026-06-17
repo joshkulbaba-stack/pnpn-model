@@ -59,12 +59,12 @@ const MT_VALS   = [10, 11, 12, 13, 14];
 const CUEQ_VALS = [4.25, 4.75, 5.5, 6.0, 7.0];
 
 // NPV matrix at default prices
-function buildMatrix(p, niskAddon, rate=0.08) {
+function buildMatrix(p, niskAddon, rate=0.08, life=15) {
   return MT_VALS.map(mt => {
     const row = { mt };
     CUEQ_VALS.forEach(cueq => {
       const capex = 400 + (mt - 10) * 20;
-      const lNPV = calcNPV(lionRevT(cueq, p), 28, mt*1e6, capex, rate);
+      const lNPV = calcNPV(lionRevT(cueq, p), 28, mt*1e6, capex, rate, life);
       row[cueq]        = +(lNPV + niskAddon).toFixed(0);
       row[`${cueq}_l`] = +lNPV.toFixed(0);
       row[`${cueq}_n`] = +niskAddon.toFixed(0);
@@ -74,11 +74,11 @@ function buildMatrix(p, niskAddon, rate=0.08) {
 }
 
 // Cu price sensitivity at 12Mt / 5.5%
-function buildCuSens(p, niskAddon, rate=0.08) {
+function buildCuSens(p, niskAddon, rate=0.08, life=15) {
   return [3.00,3.50,4.00,4.50,5.00,5.50,6.00,6.56].map(cu => {
     const pp = {...p, cu};
     const lRev = lionRevT(5.5, pp);
-    const n = calcNPV(lRev, 28, 12e6, 440, rate) + niskAddon;
+    const n = calcNPV(lRev, 28, 12e6, 440, rate, life) + niskAddon;
     const perSh = n/SHARES_M/0.73;
     return { cu: `$${cu.toFixed(2)}`, npv: +n.toFixed(0), perSh: +perSh.toFixed(2) };
   });
@@ -149,13 +149,14 @@ export default function App() {
   const [selCuEq, setSelCuEq] = useState(5.5);
   const [navDiscount, setNavDiscount] = useState(50);
   const [discountRate, setDiscountRate] = useState(8);
+  const [mineLife, setMineLife] = useState(15);
 
-  const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100),[p,discountRate]);
-  const matrix  = useMemo(()=>buildMatrix(p,niskN,discountRate/100),[p,niskN,discountRate]);
-  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100),[p,niskN,discountRate]);
+  const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
+  const matrix  = useMemo(()=>buildMatrix(p,niskN,discountRate/100,mineLife),[p,niskN,discountRate,mineLife]);
+  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100,mineLife),[p,niskN,discountRate,mineLife]);
 
   const selRev  = useMemo(()=>lionRevT(selCuEq,p),[selCuEq,p]);
-  const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20,discountRate/100),[selRev,selMt,discountRate]);
+  const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife),[selRev,selMt,discountRate,mineLife]);
   const selTot  = selLNPV + niskN;
   const selPerSh = selTot / SHARES_M / 0.73 * (1 - navDiscount/100); // USD->CAD, risked
 
@@ -384,6 +385,20 @@ export default function App() {
                   ))}
                 </div>
               </div>
+              <div style={{background:"#0d1a2a",border:`1px solid ${C.sky}44`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>Mine Life</span>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>{mineLife} yrs</span>
+                </div>
+                <input type="range" min={5} max={15} step={1} value={mineLife}
+                  onChange={e=>setMineLife(+e.target.value)}
+                  style={{width:"100%",accentColor:C.sky}}/>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
+                  {[5,6,7,8,9,10,11,12,13,14,15].map(v=>(
+                    <span key={v} style={{fontSize:9,color:mineLife===v?C.sky:C.muted,fontWeight:mineLife===v?700:400}}>{v}</span>
+                  ))}
+                </div>
+              </div>
               <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:12,marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                   <span style={{color:C.gold,fontSize:12,fontWeight:700}}>NAV Discount (exploration risk)</span>
@@ -498,7 +513,7 @@ export default function App() {
             </Card>
 
             <Card>
-              <Hdr>NPV Matrix — Pre-Tax $M USD · Lion + Nisk · {discountRate}% Discount · 15yr Life</Hdr>
+              <Hdr>NPV Matrix — Pre-Tax $M USD · Lion + Nisk · {discountRate}% Discount · {mineLife}yr Life</Hdr>
               <div style={{overflowX:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
                   <thead>
@@ -674,7 +689,7 @@ export default function App() {
               </table>
             </div>
             <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-              ~237.2M diluted shares · USD/CAD 0.73 · 8% discount · 15yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
+              ~237.2M diluted shares · USD/CAD 0.73 · {discountRate}% discount · {mineLife}yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
             </div>
           </Card>
         </div>
@@ -878,7 +893,7 @@ export default function App() {
                   ["CAPEX scaling","+$20M/Mt","over 10 Mt"],
                   ["CAPEX (12 Mt)","$440M","illustrative"],
                   ["CAPEX (14 Mt)","$480M","illustrative"],
-                  ["Mine life","15 years","assumed"],
+                  ["Mine life",`${mineLife} years`,"slider above"],
                 ].map(([l,v,sub])=>(
                   <div key={l} style={{background:C.surface,borderRadius:6,padding:"10px 12px"}}>
                     <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
@@ -897,7 +912,7 @@ export default function App() {
                   ["OPEX","$55/t","milled (UG premium)"],
                   ["CAPEX","$250M","fixed"],
                   ["Tonnes","5.43 Mt","resource estimate"],
-                  ["Mine life","15 years","assumed"],
+                  ["Mine life",`${mineLife} years`,"slider above"],
                   ["Ni grade","0.764%","avg significant"],
                   ["Cu grade","0.394%","avg significant"],
                 ].map(([l,v,sub])=>(
