@@ -12,13 +12,14 @@ const RAW = {"lion":{"stats":{"total_holes":91,"assay_rows":9878,"sig_rows":533,
 // Metal grade ratios derived from actual drill data (sig samples)
 // avg CuEq 8.282% → Cu 4.082%, Au 1.075g/t, Pd 6.721g/t, Ag 30.5g/t
 const AVG_CUEQ = 8.282;
-const GRADE_RATIO = { cu: 4.082/AVG_CUEQ, au: 1.075/AVG_CUEQ, pd: 6.721/AVG_CUEQ, ag: 30.545/AVG_CUEQ, pt: 0.3/AVG_CUEQ };
+// Pt ratio derived from SGS met study: 2.90 g/t Pt at 5.37 g/t Pd composite → Pt/Pd = 0.540
+const GRADE_RATIO = { cu: 4.082/AVG_CUEQ, au: 1.075/AVG_CUEQ, pd: 6.721/AVG_CUEQ, ag: 30.545/AVG_CUEQ, pt: 6.721/AVG_CUEQ*(2.90/5.37) };
 // Lion: SGS LCT Jan 2026 testwork results
 const REC_LION = { cu:0.989, au:0.850, pd:0.939, ag:0.889, pt:0.968, ni:0.771, co:0.79 };
 // Nisk: no met testwork yet — conservative generic estimates
 const REC_NISK = { cu:0.85,  au:0.80,  pd:0.67,  ag:0.75,  pt:0.67,  ni:0.70,  co:0.79 };
 const PAY  = { cu:0.90, au:0.95, pd:0.78, ag:0.80, pt:0.78, ni:0.73, co:0.27 };
-const LB=2204.62, OZ=32.1507;
+const LB=2204.62, OZ=31.1035; // g per troy oz (correct for g/t → oz/t conversion)
 const SHARES_M = 237.195816; // fully diluted shares (237,195,816)
 
 const DEF_P = { cu:4.50, au:3200, pd:1000, ag:32, pt:950, ni:7.00, co:12.00 };
@@ -556,11 +557,11 @@ export default function App() {
                 data={(() => {
                   const cueq=5.5;
                   return [
-                    {m:"Cu",  v:+(cueq*GRADE_RATIO.cu/100*LB*p.cu*REC.cu*PAY.cu).toFixed(0)},
-                    {m:"Pd",  v:+(cueq*GRADE_RATIO.pd/OZ*p.pd*REC.pd*PAY.pd).toFixed(0)},
-                    {m:"Au",  v:+(cueq*GRADE_RATIO.au/OZ*p.au*REC.au*PAY.au).toFixed(0)},
-                    {m:"Ag",  v:+(cueq*GRADE_RATIO.ag/OZ*p.ag*REC.ag*PAY.ag).toFixed(0)},
-                    {m:"Pt",  v:+(cueq*GRADE_RATIO.pt/OZ*p.pt*REC.pt*PAY.pt).toFixed(0)},
+                    {m:"Cu",  v:+(cueq*GRADE_RATIO.cu/100*LB*p.cu*REC_LION.cu*PAY.cu).toFixed(0)},
+                    {m:"Pd",  v:+(cueq*GRADE_RATIO.pd/OZ*p.pd*REC_LION.pd*PAY.pd).toFixed(0)},
+                    {m:"Au",  v:+(cueq*GRADE_RATIO.au/OZ*p.au*REC_LION.au*PAY.au).toFixed(0)},
+                    {m:"Ag",  v:+(cueq*GRADE_RATIO.ag/OZ*p.ag*REC_LION.ag*PAY.ag).toFixed(0)},
+                    {m:"Pt",  v:+(cueq*GRADE_RATIO.pt/OZ*p.pt*REC_LION.pt*PAY.pt).toFixed(0)},
                   ];
                 })()}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
