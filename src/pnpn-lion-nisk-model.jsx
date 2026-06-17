@@ -189,24 +189,47 @@ export default function App() {
   const [sharesInput, setSharesInput] = useState("306");
   const sharesM = Math.max(1, parseFloat(sharesInput.replace(/,/g,"")) || 306);
   const [fx, setFx] = useState(0.73);
-  const [livePrice, setLivePrice] = useState(null);
-  const [priceFetching, setPriceFetching] = useState(false);
+  const [quote, setQuote] = useState(null);
+  const livePrice = quote?.regularMarketPrice ?? null;
   const [raiseAmtInput, setRaiseAmtInput] = useState("50");
   const [raisePriceInput, setRaisePriceInput] = useState("2.00");
+  const [liveNews, setLiveNews] = useState([]);
+  const [newsFetching, setNewsFetching] = useState(false);
 
   useEffect(()=>{
-    setPriceFetching(true);
-    const url = "https://query1.finance.yahoo.com/v8/finance/chart/PNPN.V?interval=1d&range=1d";
-    const proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
-    fetch(proxy)
+    // Fetch trading quote (bid, ask, volume, price, day range)
+    const qUrl = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PNPN.V&fields=regularMarketPrice,regularMarketVolume,bid,ask,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,regularMarketChange,regularMarketChangePercent";
+    fetch("https://api.allorigins.win/get?url="+encodeURIComponent(qUrl))
       .then(r=>r.json())
-      .then(wrapper=>{
-        const data = JSON.parse(wrapper.contents);
-        const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-        if(price) setLivePrice(price);
+      .then(w=>{
+        const q = JSON.parse(w.contents)?.quoteResponse?.result?.[0];
+        if(q) setQuote(q);
+      })
+      .catch(()=>{});
+
+    // Scrape powermetallic.com/news/ for live news feed
+    setNewsFetching(true);
+    fetch("https://api.allorigins.win/get?url="+encodeURIComponent("https://www.powermetallic.com/news/"))
+      .then(r=>r.json())
+      .then(w=>{
+        const html = w.contents;
+        // Parse <a> tags that look like news release links
+        const matches = [...html.matchAll(/<a[^>]+href="([^"]*\/[a-z0-9_-]{20,}\/)"[^>]*>([\s\S]*?)<\/a>/gi)];
+        const seen = new Set();
+        const items = [];
+        for(const m of matches) {
+          const href = m[1].startsWith("http") ? m[1] : "https://www.powermetallic.com"+m[1];
+          const text = m[2].replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim();
+          if(text.length > 20 && !seen.has(href) && !href.includes("/news/") && href.includes("powermetallic")) {
+            seen.add(href);
+            items.push({headline:text, url:href});
+            if(items.length>=15) break;
+          }
+        }
+        setLiveNews(items);
       })
       .catch(()=>{})
-      .finally(()=>setPriceFetching(false));
+      .finally(()=>setNewsFetching(false));
   },[]);
 
   const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
@@ -305,15 +328,16 @@ export default function App() {
               Data last updated: <span style={{color:C.copper,fontWeight:600}}>{new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</span>
             </div>
             {livePrice!=null && (
-              <div style={{marginTop:4,display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+              <div style={{marginTop:4,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
                 <span style={{color:C.sage,fontWeight:700,fontSize:12}}>PNPN.V: C${livePrice.toFixed(2)}</span>
-                {selPerSh>0 && (()=>{
-                  const prem = (livePrice/selPerSh - 1)*100;
-                  const premColor = prem>=0?"#ef5350":C.sage;
-                  return <span style={{color:premColor,fontSize:12,fontWeight:700}}>
-                    NAV Premium/Discount: {prem>=0?"+":""}{prem.toFixed(1)}%
-                  </span>;
-                })()}
+                {quote?.regularMarketChange!=null && (
+                  <span style={{color:quote.regularMarketChange>=0?C.sage:"#ef5350",fontSize:11,fontWeight:600}}>
+                    {quote.regularMarketChange>=0?"+":""}{quote.regularMarketChange.toFixed(2)} ({quote.regularMarketChangePercent.toFixed(2)}%)
+                  </span>
+                )}
+                {quote?.regularMarketVolume!=null && (
+                  <span style={{color:C.muted,fontSize:11}}>Vol: {quote.regularMarketVolume.toLocaleString()}</span>
+                )}
               </div>
             )}
           </div>
@@ -626,6 +650,32 @@ export default function App() {
                 </div>
               </div>
             </Card>
+
+            {/* Live Trading Data */}
+            {quote && (
+              <Card style={{marginBottom:0}}>
+                <Hdr>PNPN.V — Live Market Data</Hdr>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:10,marginBottom:10}}>
+                  {[
+                    ["Last Price",   "C$"+(quote.regularMarketPrice??0).toFixed(2),                          C.sage],
+                    ["Change",       (quote.regularMarketChange>=0?"+":"")+(quote.regularMarketChange??0).toFixed(2)+" ("+((quote.regularMarketChangePercent??0).toFixed(2))+"%)", quote.regularMarketChange>=0?C.sage:"#ef5350"],
+                    ["Bid",          quote.bid ? "C$"+quote.bid.toFixed(2) : "—",                             C.text],
+                    ["Ask",          quote.ask ? "C$"+quote.ask.toFixed(2) : "—",                             C.text],
+                    ["Day High",     "C$"+(quote.regularMarketDayHigh??0).toFixed(2),                         C.copper],
+                    ["Day Low",      "C$"+(quote.regularMarketDayLow??0).toFixed(2),                          C.muted],
+                    ["Volume",       (quote.regularMarketVolume??0).toLocaleString(),                         C.sub],
+                    ["Prev Close",   "C$"+(quote.regularMarketPreviousClose??0).toFixed(2),                   C.muted],
+                    ["NAV Prem/Disc",selPerSh>0 ? ((quote.regularMarketPrice/selPerSh-1)*100).toFixed(1)+"%" : "—", selPerSh>0?(quote.regularMarketPrice/selPerSh-1)>=0?"#ef5350":C.sage:C.muted],
+                  ].map(([l,v,c])=>(
+                    <div key={l} style={{background:C.surface,borderRadius:6,padding:"8px 10px"}}>
+                      <div style={{color:C.muted,fontSize:10,marginBottom:2}}>{l}</div>
+                      <div style={{color:c,fontWeight:700,fontSize:13}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{color:C.muted,fontSize:10}}>Live via Yahoo Finance · Refreshes on page load · NAV premium/discount vs current {navDiscount}%-risked NAV/share</div>
+              </Card>
+            )}
           </div>
 
           {/* Visual: NAV/sh across full range */}
@@ -1265,13 +1315,31 @@ export default function App() {
       {/* ══════ NEWS LOG TAB ══════ */}
       {tab==="news" && (
         <div>
-          <Card style={{marginBottom:14,background:"#0d1117",border:`1px solid ${C.border}`}}>
-            <div style={{color:C.muted,fontSize:12,lineHeight:1.6}}>
-              Price reaction data to be added manually as releases occur. News releases and assay announcements tracked chronologically.
-            </div>
+          {/* Live scraped news from powermetallic.com */}
+          <Card style={{marginBottom:14}}>
+            <Hdr>Latest Releases — powermetallic.com {newsFetching && <span style={{color:C.muted,fontWeight:400,fontSize:10,textTransform:"none",letterSpacing:0}}> loading...</span>}</Hdr>
+            {liveNews.length>0 ? (
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {liveNews.map((n,i)=>(
+                  <a key={i} href={n.url} target="_blank" rel="noreferrer"
+                    style={{display:"block",padding:"10px 12px",background:i%2===0?C.surface:C.card,borderRadius:6,
+                      color:C.copper,fontSize:12,fontWeight:600,textDecoration:"none",
+                      border:`1px solid ${C.border}`,lineHeight:1.4}}>
+                    {n.headline}
+                    <span style={{color:C.muted,fontSize:10,fontWeight:400,marginLeft:8,float:"right"}}>↗</span>
+                  </a>
+                ))}
+              </div>
+            ) : !newsFetching ? (
+              <div style={{color:C.muted,fontSize:12}}>No releases loaded. Check connection or visit powermetallic.com/news directly.</div>
+            ) : (
+              <div style={{color:C.muted,fontSize:12}}>Fetching latest releases...</div>
+            )}
+            <div style={{color:C.muted,fontSize:10,marginTop:8}}>Scraped live from powermetallic.com · Refreshes on page load · Click any release to open</div>
           </Card>
           <Card>
             <Hdr>Power Metallic Mines — News Release Log</Hdr>
+            <div style={{color:C.muted,fontSize:11,marginBottom:12}}>Price reaction data added manually as releases occur.</div>
             <div style={{overflowX:"auto"}}>
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
