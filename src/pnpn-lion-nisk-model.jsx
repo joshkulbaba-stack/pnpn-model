@@ -206,7 +206,7 @@ export default function App() {
     const tryQuote = (hi, pi) => {
       if(hi>=yahooHosts.length) return Promise.reject("all yahoo hosts failed");
       if(pi>=yahooProxies.length) return tryQuote(hi+1, 0);
-      const url = `https://${yahooHosts[hi]}/v8/finance/chart/PNPN.V?interval=1d&range=5d`;
+      const url = `https://${yahooHosts[hi]}/v8/finance/chart/PNPN.V?interval=1d&range=1d`;
       return fetch(yahooProxies[pi](url))
         .then(r=>r.json())
         .then(w=>{
