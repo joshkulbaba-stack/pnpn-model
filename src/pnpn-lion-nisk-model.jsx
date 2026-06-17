@@ -573,12 +573,12 @@ export default function App() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:16}}>
             <Card>
               <Hdr>Metal Prices</Hdr>
-              <Slider label="Copper (USD/lb)"  field="cu"  min={2}   max={8}    step={0.05} unit="$"/>
-              <Slider label="Palladium (USD/oz)" field="pd" min={400} max={3000} step={25}   unit="$"/>
-              <Slider label="Gold (USD/oz)"    field="au"  min={1500} max={4500} step={50}   unit="$"/>
-              <Slider label="Nickel (USD/lb)"  field="ni"  min={3}   max={16}   step={0.25} unit="$"/>
-              <Slider label="Silver (USD/oz)"  field="ag"  min={10}  max={60}   step={1}    unit="$"/>
-              <Slider label="Platinum (USD/oz)" field="pt" min={400} max={2000} step={25}   unit="$"/>
+              <Slider label="Copper (USD/lb)"  field="cu"  min={3}   max={12}   step={0.05} unit="$"/>
+              <Slider label="Palladium (USD/oz)" field="pd" min={600} max={4000} step={25}   unit="$"/>
+              <Slider label="Gold (USD/oz)"    field="au"  min={2000} max={6000} step={50}   unit="$"/>
+              <Slider label="Nickel (USD/lb)"  field="ni"  min={5}   max={25}   step={0.25} unit="$"/>
+              <Slider label="Silver (USD/oz)"  field="ag"  min={20}  max={100}  step={1}    unit="$"/>
+              <Slider label="Platinum (USD/oz)" field="pt" min={600} max={3000} step={25}   unit="$"/>
               <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:6}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Nisk add-on NPV</div>
                 <div style={{color:C.sky,fontWeight:700,fontSize:16}}>${niskN.toFixed(0)}M</div>
