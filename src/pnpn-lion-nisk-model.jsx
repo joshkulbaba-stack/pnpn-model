@@ -114,26 +114,26 @@ const CATALYSTS = [
     rerating:"Financing catalyst. De-risks project to development stage. Further multiple expansion." },
 ];
 
-// News log data — price reaction to be updated manually as data is available
 const NEWS = [
-  { date:"2026-06-10", headline:"Closing of Brokered LIFE Offering — C$28.2M, Eric Sprott joins as new shareholder", preBefore:null, priceAfter:null, change:null, notes:"Fully diluted shares increase. Sprott backing is significant endorsement." },
-  { date:"2026-06-05", headline:"Amended LIFE Offering Document — Quebec added as offering jurisdiction", preBefore:null, priceAfter:null, change:null, notes:"Administrative update to the C$30M brokered offering." },
-  { date:"2026-05-27", headline:"Cutting-edge geophysical surveys (muon tomography) at Nisk Project", preBefore:null, priceAfter:null, change:null, notes:"Ideon Technologies partnership. Deep discovery potential at Nisk." },
-  { date:"2026-05-26", headline:"Lion delivers high-grade Cu intercepts + positive metallurgy on low-grade mineralization", preBefore:null, priceAfter:null, change:null, notes:"Confirms economic potential even at lower CuEq grades." },
-  { date:"2026-05-19", headline:"Saudi Arabia JV with Amaar Mining announced", preBefore:null, priceAfter:null, change:null, notes:"Corporate expansion — separate from Lion/Nisk core." },
-  { date:"2026-05-06", headline:"Hole 26-095: 22.0m @ 11.46% CuEqRec — second best intersection ever", preBefore:null, priceAfter:null, change:null, notes:"Major assay result. Confirms high-grade core continuity." },
-  { date:"2026-05-04", headline:"Hole 26-094: 17.45m @ 9.47% CuEqRec; Hole 26-101: 39m @ 5.66% CuEqRec", preBefore:null, priceAfter:null, change:null, notes:"Strong width on 26-101 — important for resource tonnage." },
-  { date:"2026-04-15", headline:"Hole 26-050: 27.1m @ 2.17% CuEqRec incl. 4.76m @ 10.43% CuEqRec", preBefore:null, priceAfter:null, change:null, notes:"Lower average grade but significant width. Step-out drilling." },
-  { date:"2026-03-10", headline:"Hole 25-049: 16.55m @ 15.11% CuEqRec; Hole 25-043: 7.6m @ 7.20% CuEqRec", preBefore:null, priceAfter:null, change:null, notes:"High grade — 25-049 one of best holes to date." },
-  { date:"2026-03-03", headline:"Lion East and Lion West sulphide intercepts — new structural trends identified", preBefore:null, priceAfter:null, change:null, notes:"Expands footprint beyond original Lion Zone boundary." },
-  { date:"2026-02-18", headline:"Hole 25-046: 20.4m @ 4.11% CuEqRec; Hole 25-045: 8.6m @ 6.84% CuEqRec", preBefore:null, priceAfter:null, change:null, notes:"Infill drilling confirms grade continuity." },
-  { date:"2026-01-19", headline:"SGS Met Study: Cu 98.9%, Pd 93.9%, Pt 96.8%, Au 85.0%, Ag 88.9% recoveries", preBefore:null, priceAfter:null, change:null, notes:"Industry-leading recoveries. Key de-risking event for Lion Zone." },
-  { date:"2025-12-02", headline:"Hole 25-029B: 4.4m @ 12.18% Cu (14.34% CuEqRec) within 20.4m @ 3.58% CuEqRec", preBefore:null, priceAfter:null, change:null, notes:"High-grade core within broader mineralized envelope." },
-  { date:"2025-11-04", headline:"Hole 25-022: 5.35m @ 11.97% Cu (16.35% CuEqRec) — infill + fall/winter drill update", preBefore:null, priceAfter:null, change:null, notes:"One of highest Cu% holes. Confirms exceptional grade." },
-  { date:"2025-09-22", headline:"High-grade assay results + summer exploration update", preBefore:null, priceAfter:null, change:null, notes:"Batch release covering summer drill program." },
-  { date:"2025-08-26", headline:"Seamus O'Regan (Ret. Federal Minister) appointed to Board", preBefore:null, priceAfter:null, change:null, notes:"Political/ESG credibility. Relevant for permitting narrative." },
-  { date:"2025-07-23", headline:"Positive mineralogy: PGE enrichment associated with chalcopyrite and cubanite", preBefore:null, priceAfter:null, change:null, notes:"Confirms PGE deportment — supports high met recoveries." },
-  { date:"2025-07-14", headline:"Li-FT Power land acquisition closed", preBefore:null, priceAfter:null, change:null, notes:"Land package expansion adjacent to Lion Zone." },
+  { date:"2026-06-10", headline:"Closing of Brokered LIFE Offering — C$28.2M, Eric Sprott joins as new shareholder", url:"https://www.powermetallic.com/power-metallic-mines-announces-closing-of-brokered-life-offering/" },
+  { date:"2026-06-05", headline:"Amended LIFE Offering Document — Quebec added as offering jurisdiction", url:"https://www.powermetallic.com/power-metallic-mines-files-amended-life-offering-document/" },
+  { date:"2026-05-27", headline:"Expands exploration with cutting-edge geophysical surveys (muon tomography) at Nisk", url:"https://www.powermetallic.com/power-metallic-mines-expands-exploration-arsenal-with-cutting-edge-geophysical-surveys/" },
+  { date:"2026-05-26", headline:"Lion delivers high-grade Cu intercepts + positive metallurgy on low-grade mineralization", url:"https://www.powermetallic.com/lion-delivers-high-grade-copper-intercepts-and-positive-metallurgy/" },
+  { date:"2026-05-19", headline:"Expansion in the Kingdom of Saudi Arabia announced", url:"https://www.powermetallic.com/power-metallic-announces-expansion-in-the-kingdom-of-saudi-arabia/" },
+  { date:"2026-05-13", headline:"Partners with Ideon Technologies for muon tomography at Nisk", url:"https://www.powermetallic.com/power-metallic-partners-with-ideon-technologies/" },
+  { date:"2026-05-06", headline:"Hole 26-095: 22.0m @ 11.46% CuEqRec — second best intersection ever", url:"https://www.powermetallic.com/lion-zone-delivers-second-best-intersection-ever/" },
+  { date:"2026-05-04", headline:"Hole 26-094: 17.45m @ 9.47% CuEqRec; Hole 26-101: 39m @ 5.66% CuEqRec", url:"https://www.powermetallic.com/power-metallic-intercepts-17-45-meters-of-9-47-cueqrec-in-hole-26-094/" },
+  { date:"2026-04-15", headline:"Hole 26-050: 27.1m @ 2.17% CuEqRec incl. 4.76m @ 10.43% CuEqRec", url:"https://www.powermetallic.com/power-metallic-intercepts-27-10-meters-of-2-17-cueqrec-hole-26-050/" },
+  { date:"2026-03-10", headline:"Hole 25-049: 16.55m @ 15.11% CuEqRec; Hole 25-043: 7.6m @ 7.20% CuEqRec", url:"https://www.powermetallic.com/power-metallic-intercepts-16-55-meters-of-15-11-cueqrec-in-hole-25-049/" },
+  { date:"2026-03-03", headline:"Lion East and Lion West sulphide intercepts — new structural trends identified", url:"https://www.powermetallic.com/power-metallic-intercepts-lion-style-sulphides-lion-east-and-lion-west/" },
+  { date:"2026-02-18", headline:"Hole 25-046: 20.4m @ 4.11% CuEqRec; Hole 25-045: 8.6m @ 6.84% CuEqRec", url:"https://www.powermetallic.com/power-metallic-intercepts-20-40-meters-of-4-11-cueqrec-in-hole-25-046/" },
+  { date:"2026-01-19", headline:"SGS Met Study: Cu 98.9%, Pd 93.9%, Pt 96.8%, Au 85.0%, Ag 88.9% recoveries", url:"https://www.powermetallic.com/power-metallic-reports-lion-zone-recoveries-of-98-9-copper-93-9-palladium/" },
+  { date:"2025-12-02", headline:"Hole 25-029B: 4.4m @ 12.18% Cu (14.34% CuEqRec) within 20.4m @ 3.58% CuEqRec", url:"https://www.powermetallic.com/power-metallic-intercepts-4-40-meters-of-12-18-cu-hole-25-029b/" },
+  { date:"2025-11-04", headline:"Hole 25-022: 5.35m @ 11.97% Cu (16.35% CuEqRec) — infill + fall/winter drill update", url:"https://www.powermetallic.com/power-metallic-intercepts-5-35-meters-of-11-97-cu-16-35-cueqrec-in-hole-25-022/" },
+  { date:"2025-09-22", headline:"High-grade assay results + summer exploration update", url:"https://www.powermetallic.com/power-metallic-reports-high-grade-assays-and-provides-summer-update/" },
+  { date:"2025-08-26", headline:"Seamus O'Regan (Ret. Federal Minister) appointed to Board", url:"https://www.powermetallic.com/power-metallic-appoints-retired-federal-minister-seamus-oregan-to-board/" },
+  { date:"2025-07-23", headline:"Positive initial mineralogy: PGE enrichment associated with chalcopyrite and cubanite", url:"https://www.powermetallic.com/power-metallic-demonstrates-positive-initial-mineralogy-results/" },
+  { date:"2025-07-14", headline:"Li-FT Power land acquisition closed", url:"https://www.powermetallic.com/power-metallic-closes-on-li-ft-power-land-acquisition/" },
 ];
 
 // ── UI TOKENS ──────────────────────────────────────────────────────────────
@@ -1375,7 +1375,7 @@ export default function App() {
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
                   <tr style={{borderBottom:`1px solid ${C.border}`}}>
-                    {["Date","Headline","Price Before","Price After","% Change","Notes"].map(h=>(
+                    {["Date","Headline"].map(h=>(
                       <th key={h} style={{color:C.muted,fontSize:11,padding:"6px 12px",textAlign:"left",fontWeight:600}}>{h}</th>
                     ))}
                   </tr>
@@ -1384,13 +1384,13 @@ export default function App() {
                   {NEWS.map((n,i)=>(
                     <tr key={i} style={{background:i%2===1?C.surface+"88":"transparent",borderBottom:`1px solid ${C.border}22`}}>
                       <td style={{padding:"8px 12px",color:C.muted,fontSize:11,whiteSpace:"nowrap"}}>{n.date}</td>
-                      <td style={{padding:"8px 12px",color:C.copper,fontWeight:600,fontSize:12}}>{n.headline}</td>
-                      <td style={{padding:"8px 12px",color:C.sub,fontSize:12}}>{n.preBefore!=null?"C$"+n.preBefore.toFixed(2):"—"}</td>
-                      <td style={{padding:"8px 12px",color:C.sub,fontSize:12}}>{n.priceAfter!=null?"C$"+n.priceAfter.toFixed(2):"—"}</td>
                       <td style={{padding:"8px 12px",fontSize:12}}>
-                        {n.change!=null?<span style={{color:n.change>=0?C.sage:"#ef5350",fontWeight:700}}>{n.change>=0?"+":""}{n.change.toFixed(1)}%</span>:"—"}
+                        <a href={n.url} target="_blank" rel="noopener noreferrer" style={{color:C.copper,fontWeight:600,textDecoration:"none"}}
+                          onMouseEnter={e=>e.target.style.textDecoration="underline"}
+                          onMouseLeave={e=>e.target.style.textDecoration="none"}>
+                          {n.headline}
+                        </a>
                       </td>
-                      <td style={{padding:"8px 12px",color:C.muted,fontSize:11}}>{n.notes}</td>
                     </tr>
                   ))}
                 </tbody>
