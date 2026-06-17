@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
   ScatterChart, Scatter, CartesianGrid, ReferenceLine, Cell,
@@ -74,15 +74,51 @@ function buildMatrix(p, niskAddon, rate=0.08, life=15) {
 }
 
 // Cu price sensitivity at 12Mt / 5.5%
-function buildCuSens(p, niskAddon, rate=0.08, life=15, shares=306) {
+function buildCuSens(p, niskAddon, rate=0.08, life=15, shares=306, fx=0.73) {
   return [3.00,3.50,4.00,4.50,5.00,5.50,6.00,6.56].map(cu => {
     const pp = {...p, cu};
     const lRev = lionRevT(5.5, pp);
     const n = calcNPV(lRev, 28, 12e6, 440, rate, life) + niskAddon;
-    const perSh = n/shares/0.73;
+    const perSh = n/shares/fx;
     return { cu: `$${cu.toFixed(2)}`, npv: +n.toFixed(0), perSh: +perSh.toFixed(2) };
   });
 }
+
+// Cut-off grade data (computed from RAW.lion.hist bin centres)
+const COG_DATA = [
+  {cog:"0%",   tonnes:100,  grade:0.84},
+  {cog:"0.5%", tonnes:71.2, grade:1.17},
+  {cog:"1%",   tonnes:56.4, grade:1.47},
+  {cog:"2%",   tonnes:42.1, grade:1.95},
+  {cog:"3%",   tonnes:33.5, grade:2.58},
+  {cog:"4%",   tonnes:25.8, grade:3.42},
+  {cog:"5%",   tonnes:19.5, grade:5.21},
+];
+
+// Catalyst timeline data
+const CATALYSTS = [
+  { date:"Q3 2026", event:"Inaugural Lion Zone MRE", status:"upcoming", color:"#ff6f00",
+    detail:"First formal resource estimate. Key de-risking event. Consensus 10–14Mt @ 4.25–7% CuEq.",
+    rerating:"Multiple expansion likely. Junior miners typically re-rate 20–40% on maiden MRE." },
+  { date:"Q4 2026", event:"Nisk Deposit PEA", status:"upcoming", color:"#4fc3f7",
+    detail:"Preliminary Economic Assessment for Nisk. First economics on the Ni-Cu-Pd deposit.",
+    rerating:"Adds formal valuation anchor for Nisk. Could unlock institutional interest." },
+  { date:"Q1 2027", event:"Lion Zone PEA", status:"upcoming", color:"#e85d00",
+    detail:"PEA on Lion Zone following MRE. Will include mine plan, capex, opex, IRR.",
+    rerating:"Major catalyst. Historical: junior Cu/Pd projects re-rate 30–60% on PEA." },
+  { date:"2027", event:"Nasdaq/NYSE Uplisting", status:"speculative", color:"#9c27b0",
+    detail:"Move from TSXV to senior exchange increases institutional accessibility and liquidity.",
+    rerating:"Liquidity premium. US-listed peers trade at 15–25% higher multiples on average." },
+  { date:"2028", event:"Prefeasibility Study (PFS)", status:"speculative", color:"#81c784",
+    detail:"PFS represents bankable-level study. Required for project financing.",
+    rerating:"Financing catalyst. De-risks project to development stage. Further multiple expansion." },
+];
+
+// News log data
+const NEWS = [
+  { date:"2026-06-16", headline:"PML-26-049: 14.3m @ 16.58% CuEq incl. 3.1m @ 35.55% CuEq", preBefore:null, priceAfter:null, change:null, notes:"Lion Zone step-out. Confirms grade continuity to depth." },
+  { date:"2025-12-01", headline:"SGS LCT Metallurgical Study: Cu 98.9%, Pd 93.9% recoveries", preBefore:null, priceAfter:null, change:null, notes:"Industry-leading recoveries confirmed for Lion Zone." },
+];
 
 // ── UI TOKENS ──────────────────────────────────────────────────────────────
 const C = {
@@ -152,15 +188,32 @@ export default function App() {
   const [mineLife, setMineLife] = useState(15);
   const [sharesInput, setSharesInput] = useState("306");
   const sharesM = Math.max(1, parseFloat(sharesInput.replace(/,/g,"")) || 306);
+  const [fx, setFx] = useState(0.73);
+  const [livePrice, setLivePrice] = useState(null);
+  const [priceFetching, setPriceFetching] = useState(false);
+  const [raiseAmtInput, setRaiseAmtInput] = useState("50");
+  const [raisePriceInput, setRaisePriceInput] = useState("2.00");
+
+  useEffect(()=>{
+    setPriceFetching(true);
+    fetch("https://query1.finance.yahoo.com/v8/finance/chart/PNPN.V?interval=1d&range=1d")
+      .then(r=>r.json())
+      .then(data=>{
+        const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+        if(price) setLivePrice(price);
+      })
+      .catch(()=>{})
+      .finally(()=>setPriceFetching(false));
+  },[]);
 
   const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
   const matrix  = useMemo(()=>buildMatrix(p,niskN,discountRate/100,mineLife),[p,niskN,discountRate,mineLife]);
-  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100,mineLife,sharesM),[p,niskN,discountRate,mineLife,sharesM]);
+  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100,mineLife,sharesM,fx),[p,niskN,discountRate,mineLife,sharesM,fx]);
 
   const selRev  = useMemo(()=>lionRevT(selCuEq,p),[selCuEq,p]);
   const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife),[selRev,selMt,discountRate,mineLife]);
   const selTot  = selLNPV + niskN;
-  const selPerSh = selTot / sharesM / 0.73 * (1 - navDiscount/100); // USD->CAD, risked
+  const selPerSh = selTot / sharesM / fx * (1 - navDiscount/100); // USD->CAD, risked
 
   // Implied grades at selected CuEq
   const impl = {
@@ -174,12 +227,24 @@ export default function App() {
   const pd_koz = (selMt*1e6 * selCuEq*GRADE_RATIO.pd/OZ / 1000).toFixed(0);
 
   const TABS = [
-    {id:"mre",    label:"MRE Range"},
-    {id:"matrix", label:"NPV Matrix"},
-    {id:"pxsens", label:"Cu Price Sens."},
-    {id:"data",   label:"Drill Data"},
+    {id:"mre",       label:"MRE Range"},
+    {id:"matrix",    label:"NPV Matrix"},
+    {id:"pxsens",    label:"Cu Price Sens."},
+    {id:"data",      label:"Drill Data"},
     {id:"assumptions", label:"Assumptions"},
+    {id:"cutoff",    label:"Cut-off Sensitivity"},
+    {id:"catalyst",  label:"Catalysts"},
+    {id:"news",      label:"News Log"},
+    {id:"capexsens", label:"CAPEX/OPEX Sens."},
   ];
+
+  // Equity dilution calcs
+  const raiseAmt   = Math.max(0, parseFloat(raiseAmtInput) || 0);
+  const raisePrice = Math.max(0.01, parseFloat(raisePriceInput) || 0.01);
+  const newShares  = raiseAmt / raisePrice;
+  const postShares = sharesM + newShares;
+  const postNavPerSh = selTot / postShares / fx * (1 - navDiscount/100);
+  const dilution   = newShares / postShares * 100;
 
   const Slider = ({label,field,min,max,step,unit}) => {
     const isDecimal = field==="cu"||field==="ni"||field==="co";
@@ -236,6 +301,18 @@ export default function App() {
             <div style={{color:C.muted,fontSize:11,marginTop:4}}>
               Data last updated: <span style={{color:C.copper,fontWeight:600}}>{new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</span>
             </div>
+            {livePrice!=null && (
+              <div style={{marginTop:4,display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+                <span style={{color:C.sage,fontWeight:700,fontSize:12}}>PNPN.V: C${livePrice.toFixed(2)}</span>
+                {selPerSh>0 && (()=>{
+                  const prem = (livePrice/selPerSh - 1)*100;
+                  const premColor = prem>=0?"#ef5350":C.sage;
+                  return <span style={{color:premColor,fontSize:12,fontWeight:700}}>
+                    NAV Premium/Discount: {prem>=0?"+":""}{prem.toFixed(1)}%
+                  </span>;
+                })()}
+              </div>
+            )}
           </div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
             <Tag c={C.copper}>Lion CuEq</Tag>
@@ -355,7 +432,7 @@ export default function App() {
                   sub={`Ni $${p.ni}/lb · Rev $${niskRevT(p).toFixed(0)}/t vs $55 opex`}/>
                 <Kpi label="Combined NPV (Pre-Tax)" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage}/>
                 <Kpi label={`NAV/share (${navDiscount}% risked)`} value={"C$"+selPerSh.toFixed(2)} color={C.gold}
-                  sub={`${sharesM.toFixed(1)}M dil. shares · 0.73 FX`}/>
+                  sub={`${sharesM.toFixed(1)}M dil. shares · ${fx.toFixed(2)} FX`}/>
                 <Kpi label="Gross Rev/t (Lion)" value={"$"+selRev.toFixed(0)} unit="USD/t" color={C.copper}
                   sub={"Net $"+(selRev-28).toFixed(0)+"/t after $28 opex"}/>
               </div>
@@ -401,6 +478,20 @@ export default function App() {
                   ))}
                 </div>
               </div>
+              <div style={{background:"#001220",border:`1px solid ${C.sky}44`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>USD/CAD FX Rate</span>
+                  <span style={{color:C.sky,fontSize:12,fontWeight:700}}>{fx.toFixed(2)}</span>
+                </div>
+                <input type="range" min={0.65} max={0.85} step={0.01} value={fx}
+                  onChange={e=>setFx(+e.target.value)}
+                  style={{width:"100%",accentColor:C.sky}}/>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
+                  {[0.65,0.68,0.70,0.72,0.73,0.75,0.78,0.80,0.82,0.85].map(v=>(
+                    <span key={v} style={{fontSize:9,color:Math.abs(fx-v)<0.005?C.sky:C.muted,fontWeight:Math.abs(fx-v)<0.005?700:400}}>{v.toFixed(2)}</span>
+                  ))}
+                </div>
+              </div>
               <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:12,marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                   <span style={{color:C.gold,fontSize:12,fontWeight:700}}>NAV Discount (exploration risk)</span>
@@ -439,7 +530,7 @@ export default function App() {
                     ["Lion (after-tax)", "$"+(selLNPV*(1-TAX_RATE)).toFixed(0)+"M", C.copper],
                     ["Nisk (after-tax)", (niskN*(1-TAX_RATE)>=0?"$":"−$")+Math.abs(niskN*(1-TAX_RATE)).toFixed(0)+"M", niskN>=0?C.sky:"#ef5350"],
                     ["Combined (after-tax)", "$"+(selTot*(1-TAX_RATE)).toFixed(0)+"M", C.sage],
-                    ["NAV/share (after-tax)", "C$"+(selTot*(1-TAX_RATE)/sharesM/0.73*(1-navDiscount/100)).toFixed(2), C.gold],
+                    ["NAV/share (after-tax)", "C$"+(selTot*(1-TAX_RATE)/sharesM/fx*(1-navDiscount/100)).toFixed(2), C.gold],
                   ].map(([l,v,c])=>(
                     <div key={l} style={{background:"#1a0000",borderRadius:6,padding:"8px 10px"}}>
                       <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
@@ -466,7 +557,7 @@ export default function App() {
                           <td style={{color:C.copper,fontWeight:700,fontSize:12,padding:"4px 8px"}}>{row.mt}Mt</td>
                           {CUEQ_VALS.map(c=>{
                             const at = +(row[c]*(1-TAX_RATE)).toFixed(0);
-                            const atNav = +(at/sharesM/0.73*(1-navDiscount/100)).toFixed(2);
+                            const atNav = +(at/sharesM/fx*(1-navDiscount/100)).toFixed(2);
                             const isSelected = row.mt===selMt && Math.abs(c-selCuEq)<0.01;
                             return (
                               <td key={c} onClick={()=>{setSelMt(row.mt);setSelCuEq(c);}}
@@ -486,6 +577,38 @@ export default function App() {
                   </table>
                 </div>
                 <div style={{color:C.muted,fontSize:10,marginTop:6}}>37.5% effective tax rate (fed + prov + mining duties). Pre-tax matrix in NPV Matrix tab.</div>
+              </div>
+              {/* Equity Raise Dilution Modeler */}
+              <div style={{background:"#0d1a0d",border:`1px solid ${C.gold}88`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{color:C.gold,fontWeight:700,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:10}}>
+                  Equity Raise Dilution Modeler
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                  <div>
+                    <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Raise Amount ($M CAD)</div>
+                    <input type="number" min={0} value={raiseAmtInput} onChange={e=>setRaiseAmtInput(e.target.value)}
+                      style={{width:"100%",background:"#0d1117",border:`1px solid ${C.gold}66`,borderRadius:4,color:C.gold,fontSize:14,fontWeight:700,padding:"5px 8px",boxSizing:"border-box",outline:"none"}}/>
+                  </div>
+                  <div>
+                    <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Issue Price (CAD/sh)</div>
+                    <input type="number" min={0.01} step={0.05} value={raisePriceInput} onChange={e=>setRaisePriceInput(e.target.value)}
+                      style={{width:"100%",background:"#0d1117",border:`1px solid ${C.gold}66`,borderRadius:4,color:C.gold,fontSize:14,fontWeight:700,padding:"5px 8px",boxSizing:"border-box",outline:"none"}}/>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8}}>
+                  {[
+                    ["New Shares",newShares.toFixed(1)+"M",C.text],
+                    ["Post-Raise Shares",postShares.toFixed(1)+"M",C.text],
+                    ["Dilution %",dilution.toFixed(1)+"%","#ef5350"],
+                    ["NAV/sh Before","C$"+selPerSh.toFixed(2),C.gold],
+                    ["NAV/sh After","C$"+postNavPerSh.toFixed(2),postNavPerSh>=selPerSh?C.sage:"#ef5350"],
+                  ].map(([l,v,c])=>(
+                    <div key={l} style={{background:"#1a1000",borderRadius:5,padding:"7px 8px"}}>
+                      <div style={{color:C.muted,fontSize:9,marginBottom:2}}>{l}</div>
+                      <div style={{color:c,fontWeight:700,fontSize:13}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div style={{background:C.surface,borderRadius:6,padding:12}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:8}}>Contained metal ({selMt}Mt)</div>
@@ -530,7 +653,7 @@ export default function App() {
                     const capex=400+(mt-10)*20;
                     const lRev=lionRevT(cueq,p);
                     const n=calcNPV(lRev,28,mt*1e6,capex)+niskN;
-                    pts.push({cueq,nav:+(n/sharesM/0.73).toFixed(2),mt});
+                    pts.push({cueq,nav:+(n/sharesM/fx).toFixed(2),mt});
                   }
                   return <Line key={mt} data={pts} dataKey="nav" name={`${mt}Mt`}
                     stroke={clrs[mi]} dot={false} strokeWidth={2}/>;
@@ -620,7 +743,7 @@ export default function App() {
                                 Lion ${lv.toLocaleString()}M · Nisk ${nv.toLocaleString()}M
                               </div>
                               <div style={{color:"rgba(255,255,255,0.6)",fontSize:10}}>
-                                C${(v/sharesM/0.73).toFixed(2)}/sh
+                                C${(v/sharesM/fx).toFixed(2)}/sh
                               </div>
                             </td>
                           );
@@ -755,7 +878,7 @@ export default function App() {
                         <td style={{padding:"6px 12px",color:C.sub}}>${(lRev-28).toFixed(0)}/t</td>
                         <td style={{padding:"6px 12px",color:C.sage,fontWeight:700}}>${d.npv.toLocaleString()}M</td>
                         <td style={{padding:"6px 12px",color:C.gold,fontWeight:700}}>C${(d.perSh*(1-navDiscount/100)).toFixed(2)}</td>
-                        <td style={{padding:"6px 12px",color:C.sub}}>C${(d.npv/0.73/1000).toFixed(1)}B</td>
+                        <td style={{padding:"6px 12px",color:C.sub}}>C${(d.npv/fx/1000).toFixed(1)}B</td>
                       </tr>
                     );
                   })}
@@ -763,7 +886,7 @@ export default function App() {
               </table>
             </div>
             <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-              ~{sharesM.toFixed(1)}M diluted shares · USD/CAD 0.73 · {discountRate}% discount · {mineLife}yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
+              ~{sharesM.toFixed(1)}M diluted shares · USD/CAD {fx.toFixed(2)} · {discountRate}% discount · {mineLife}yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
             </div>
           </Card>
         </div>
@@ -1006,7 +1129,7 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
               {[
                 ["Diluted Shares",`${sharesM.toFixed(1)}M`,"fully diluted"],
-                ["USD/CAD FX","0.73","for NAV/share"],
+                ["USD/CAD FX",fx.toFixed(2),"for NAV/share (slider)"],
                 ["Discount Rate","8% default","adjustable 6–15%"],
                 ["NAV Discount","50% default","adjustable 10–90%"],
                 ["Lion Opex basis","$/t milled","open pit"],
@@ -1029,6 +1152,206 @@ export default function App() {
 
         </div>
       )}
+
+      {/* ══════ CUT-OFF SENSITIVITY TAB ══════ */}
+      {tab==="cutoff" && (
+        <div>
+          <Card style={{marginBottom:14,background:"#001a10",border:`1px solid ${C.sage}44`}}>
+            <div style={{color:C.sage,fontWeight:700,fontSize:13,marginBottom:6}}>Grade-Tonnage Relationship — Lion Zone</div>
+            <div style={{color:C.sub,fontSize:12,lineHeight:1.65}}>
+              Based on 9,878 Lion Zone assay records. Higher cut-off removes low-grade material, increasing avg grade but reducing total resource. Values shown as % of total assay metres.
+            </div>
+          </Card>
+          <Card style={{marginBottom:14}}>
+            <Hdr>Cut-off Grade vs. % Metres Remaining &amp; Avg CuEq Grade</Hdr>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={COG_DATA} margin={{top:10,right:60,left:10,bottom:20}}>
+                <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
+                <XAxis dataKey="cog" tick={{fill:C.sub,fontSize:11}}
+                  label={{value:"Cut-off Grade",fill:C.muted,fontSize:11,position:"insideBottom",offset:-12}}/>
+                <YAxis yAxisId="left" tick={{fill:C.sub,fontSize:11}} unit="%" domain={[0,110]}
+                  label={{value:"% Metres Remaining",fill:C.muted,fontSize:10,angle:-90,position:"insideLeft"}}/>
+                <YAxis yAxisId="right" orientation="right" tick={{fill:C.sage,fontSize:11}} unit="%"
+                  label={{value:"Avg CuEq %",fill:C.sage,fontSize:10,angle:90,position:"insideRight"}}/>
+                <Tooltip contentStyle={{background:C.card,border:`1px solid ${C.border}`}}
+                  formatter={(v,name)=>name==="Avg CuEq %"?[v.toFixed(2)+"%",name]:[v.toFixed(1)+"%",name]}/>
+                <Legend wrapperStyle={{fontSize:11}}/>
+                <Bar yAxisId="left" dataKey="tonnes" name="% Metres Remaining" fill={C.copper} radius={[3,3,0,0]} opacity={0.85}/>
+                <Bar yAxisId="right" dataKey="grade" name="Avg CuEq %" fill={C.sage} radius={[3,3,0,0]} opacity={0.75}/>
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+          <Card>
+            <Hdr>Cut-off Grade Table</Hdr>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead>
+                  <tr style={{borderBottom:`1px solid ${C.border}`}}>
+                    {["Cut-off","% Metres Remaining","Avg CuEq Grade","Notes"].map(h=>(
+                      <th key={h} style={{color:C.muted,fontSize:11,padding:"6px 12px",textAlign:"left",fontWeight:600}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COG_DATA.map((d,i)=>(
+                    <tr key={d.cog} style={{background:i%2===1?C.surface+"55":"transparent",borderBottom:`1px solid ${C.border}22`}}>
+                      <td style={{padding:"6px 12px",color:C.copper,fontWeight:700}}>{d.cog}</td>
+                      <td style={{padding:"6px 12px",color:C.text,fontWeight:700}}>{d.tonnes.toFixed(1)}%</td>
+                      <td style={{padding:"6px 12px",color:C.sage,fontWeight:700}}>{d.grade.toFixed(2)}%</td>
+                      <td style={{padding:"6px 12px",color:C.muted,fontSize:11}}>
+                        {d.cog==="0%" ? "All material, incl. sub-grade" :
+                         d.cog==="1%" ? "Typical economic cut-off for open pit" :
+                         d.cog==="3%" ? "High-grade core" : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{color:C.muted,fontSize:11,marginTop:8}}>
+              Based on 9,878 Lion Zone assay records. Grade-tonnage relationship — higher cut-off removes low-grade material, increasing avg grade but reducing total resource. Values are % of total assay metres, not absolute resource tonnes.
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ══════ CATALYST TIMELINE TAB ══════ */}
+      {tab==="catalyst" && (
+        <div>
+          <Card style={{marginBottom:16,background:"#0d1000",border:`1px solid #ff6f0066`}}>
+            <div style={{color:"#ff6f00",fontWeight:700,fontSize:13,marginBottom:4}}>Catalyst Timeline — Expected Re-Rating Events</div>
+            <div style={{color:C.sub,fontSize:12,lineHeight:1.6}}>
+              Key upcoming milestones and their historical re-rating impact for comparable junior mining projects. Speculative events are subject to change based on exploration progress and financing.
+            </div>
+          </Card>
+          <div style={{position:"relative",paddingLeft:24}}>
+            {/* Vertical line */}
+            <div style={{position:"absolute",left:10,top:0,bottom:0,width:2,background:C.border}}/>
+            {CATALYSTS.map((cat,i)=>(
+              <div key={i} style={{position:"relative",marginBottom:20,paddingLeft:16}}>
+                {/* Dot */}
+                <div style={{position:"absolute",left:-20,top:14,width:12,height:12,borderRadius:"50%",
+                  background:cat.color,border:`2px solid ${cat.color}`,boxShadow:`0 0 8px ${cat.color}66`}}/>
+                <Card style={{border:`1px solid ${cat.color}44`}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:12,flexWrap:"wrap"}}>
+                    <div style={{minWidth:80}}>
+                      <div style={{color:cat.color,fontWeight:800,fontSize:13}}>{cat.date}</div>
+                      <span style={{
+                        background:cat.status==="upcoming"?"#ff6f0022":"#9c27b022",
+                        color:cat.status==="upcoming"?"#ff6f00":"#9c27b0",
+                        border:`1px solid ${cat.status==="upcoming"?"#ff6f0044":"#9c27b044"}`,
+                        borderRadius:4,padding:"1px 7px",fontSize:10,fontWeight:700,
+                        letterSpacing:"0.06em",textTransform:"uppercase",display:"inline-block",marginTop:4
+                      }}>{cat.status}</span>
+                    </div>
+                    <div style={{flex:1,minWidth:200}}>
+                      <div style={{color:C.text,fontWeight:700,fontSize:14,marginBottom:4}}>{cat.event}</div>
+                      <div style={{color:C.sub,fontSize:12,marginBottom:6,lineHeight:1.55}}>{cat.detail}</div>
+                      <div style={{background:"#0d1a0a",border:`1px solid ${C.sage}33`,borderRadius:4,padding:"6px 10px",fontSize:12,color:C.sage}}>
+                        <span style={{fontWeight:700}}>Re-rating: </span>{cat.rerating}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════ NEWS LOG TAB ══════ */}
+      {tab==="news" && (
+        <div>
+          <Card style={{marginBottom:14,background:"#0d1117",border:`1px solid ${C.border}`}}>
+            <div style={{color:C.muted,fontSize:12,lineHeight:1.6}}>
+              Price reaction data to be added manually as releases occur. News releases and assay announcements tracked chronologically.
+            </div>
+          </Card>
+          <Card>
+            <Hdr>Power Metallic Mines — News Release Log</Hdr>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead>
+                  <tr style={{borderBottom:`1px solid ${C.border}`}}>
+                    {["Date","Headline","Price Before","Price After","% Change","Notes"].map(h=>(
+                      <th key={h} style={{color:C.muted,fontSize:11,padding:"6px 12px",textAlign:"left",fontWeight:600}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {NEWS.map((n,i)=>(
+                    <tr key={i} style={{background:i%2===1?C.surface+"88":"transparent",borderBottom:`1px solid ${C.border}22`}}>
+                      <td style={{padding:"8px 12px",color:C.muted,fontSize:11,whiteSpace:"nowrap"}}>{n.date}</td>
+                      <td style={{padding:"8px 12px",color:C.copper,fontWeight:600,fontSize:12}}>{n.headline}</td>
+                      <td style={{padding:"8px 12px",color:C.sub,fontSize:12}}>{n.preBefore!=null?"C$"+n.preBefore.toFixed(2):"—"}</td>
+                      <td style={{padding:"8px 12px",color:C.sub,fontSize:12}}>{n.priceAfter!=null?"C$"+n.priceAfter.toFixed(2):"—"}</td>
+                      <td style={{padding:"8px 12px",fontSize:12}}>
+                        {n.change!=null?<span style={{color:n.change>=0?C.sage:"#ef5350",fontWeight:700}}>{n.change>=0?"+":""}{n.change.toFixed(1)}%</span>:"—"}
+                      </td>
+                      <td style={{padding:"8px 12px",color:C.muted,fontSize:11}}>{n.notes}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ══════ CAPEX/OPEX SENSITIVITY TAB ══════ */}
+      {tab==="capexsens" && (()=>{
+        const capexVals = [300,400,500,600,700];
+        const opexVals  = [20,25,28,32,38,45];
+        return (
+          <div>
+            <Card style={{marginBottom:14,background:"#0d1117",border:`1px solid ${C.border}`}}>
+              <div style={{color:C.sub,fontSize:12,lineHeight:1.6}}>
+                <strong style={{color:C.text}}>12Mt @ 5.5% CuEq · Current Metal Prices · Fixed scenario</strong> — CAPEX axis (columns), OPEX axis (rows). Shows combined pre-tax NPV ($M) and NAV/share (C$). Gold border = base case (CAPEX $400M, OPEX $28/t).
+              </div>
+            </Card>
+            <Card>
+              <Hdr>CAPEX/OPEX Sensitivity Matrix — 12Mt @ 5.5% CuEq · {discountRate}% Discount · {mineLife}yr Life</Hdr>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
+                  <thead>
+                    <tr>
+                      <th style={{color:C.muted,fontSize:11,padding:"6px 10px",textAlign:"left",fontWeight:600}}>OPEX $/t ↓ / CAPEX $M →</th>
+                      {capexVals.map(cx=>(
+                        <th key={cx} style={{color:"#ff6f00",fontSize:12,padding:"6px 10px",textAlign:"center",fontWeight:700}}>${cx}M</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opexVals.map(opex=>(
+                      <tr key={opex}>
+                        <td style={{color:C.copper,fontWeight:700,fontSize:13,padding:"6px 10px"}}>${opex}/t</td>
+                        {capexVals.map(capex=>{
+                          const npv = calcNPV(lionRevT(5.5,p),opex,12e6,capex,discountRate/100,mineLife)+niskN;
+                          const navSh = +(npv/sharesM/fx*(1-navDiscount/100)).toFixed(2);
+                          const isBase = capex===400 && opex===28;
+                          return (
+                            <td key={capex} style={{
+                              background:npvColor(npv),
+                              border:isBase?`2px solid ${C.gold}`:`2px solid transparent`,
+                              borderRadius:6,padding:"8px 10px",textAlign:"center",
+                            }}>
+                              <div style={{color:"#fff",fontWeight:700,fontSize:12}}>${npv.toFixed(0)}M</div>
+                              <div style={{color:"rgba(255,255,255,0.65)",fontSize:10}}>C${navSh}/sh</div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{color:C.muted,fontSize:11,marginTop:8}}>
+                Includes Nisk add-on NPV (${niskN.toFixed(0)}M at current prices). Gold border = base case. FX: {fx.toFixed(2)}. NAV discount: {navDiscount}%.
+              </div>
+            </Card>
+          </div>
+        );
+      })()}
 
       </div>
     </div>
