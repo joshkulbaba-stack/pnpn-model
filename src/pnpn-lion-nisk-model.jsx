@@ -1470,7 +1470,7 @@ export default function App() {
         <div>
           {/* Live scraped news from powermetallic.com */}
           <Card style={{marginBottom:14}}>
-            <Hdr>Latest Releases — powermetallic.com {newsFetching && <span style={{color:C.muted,fontWeight:400,fontSize:10,textTransform:"none",letterSpacing:0}}> loading...</span>}</Hdr>
+            <Hdr>Corporate Filings &amp; Announcements — powermetallic.com {newsFetching && <span style={{color:C.muted,fontWeight:400,fontSize:10,textTransform:"none",letterSpacing:0}}> loading...</span>}</Hdr>
             {liveNews.length>0 ? (
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {liveNews.map((n,i)=>(
@@ -1492,7 +1492,6 @@ export default function App() {
           </Card>
           <Card>
             <Hdr>Power Metallic Mines — News Release Log</Hdr>
-            <div style={{color:C.muted,fontSize:11,marginBottom:12}}>Price reaction data added manually as releases occur.</div>
             <div style={{overflowX:"auto"}}>
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
