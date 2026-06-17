@@ -1,0 +1,689 @@
+{
+  "stats": {
+    "total_holes": 100,
+    "assay_rows": 10082,
+    "sig_rows": 487,
+    "avg_cueq_sig": 7.22,
+    "max_cueq": 75.102,
+    "avg_cu": 4.19,
+    "avg_au": 1.171,
+    "avg_pd": 7.067,
+    "avg_ag": 30.593
+  },
+  "holes": [
+    {
+      "hole": "PML-25-012A",
+      "length": 5.8,
+      "grade": 20.69,
+      "maxGrade": 56.739,
+      "year": 2025
+    },
+    {
+      "hole": "PML-25-001",
+      "length": 0.8,
+      "grade": 17.16,
+      "maxGrade": 17.16,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-047",
+      "length": 12,
+      "grade": 14.239,
+      "maxGrade": 31.336,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-023",
+      "length": 4.2,
+      "grade": 14.109,
+      "maxGrade": 32.431,
+      "year": 2025
+    },
+    {
+      "hole": "PML-26-049",
+      "length": 14.3,
+      "grade": 14.076,
+      "maxGrade": 30.376,
+      "year": 2026
+    },
+    {
+      "hole": "PN-24-059",
+      "length": 5.7,
+      "grade": 13.385,
+      "maxGrade": 19.726,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-002",
+      "length": 1.1,
+      "grade": 13.295,
+      "maxGrade": 27.809,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-068",
+      "length": 0.5,
+      "grade": 12.544,
+      "maxGrade": 12.544,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-051",
+      "length": 7.5,
+      "grade": 12.272,
+      "maxGrade": 75.102,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-025A",
+      "length": 5.3,
+      "grade": 11.573,
+      "maxGrade": 42.686,
+      "year": 2025
+    },
+    {
+      "hole": "PML-25-031",
+      "length": 4.7,
+      "grade": 11.442,
+      "maxGrade": 23.707,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-055",
+      "length": 12.9,
+      "grade": 10.968,
+      "maxGrade": 31.538,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-053",
+      "length": 9.3,
+      "grade": 10.784,
+      "maxGrade": 35.876,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-071",
+      "length": 13.7,
+      "grade": 10.322,
+      "maxGrade": 23.065,
+      "year": 2024
+    },
+    {
+      "hole": "PN-25-096",
+      "length": 5.3,
+      "grade": 10.299,
+      "maxGrade": 32.185,
+      "year": 2025
+    },
+    {
+      "hole": "PML-25-029B",
+      "length": 6.4,
+      "grade": 9.87,
+      "maxGrade": 20.527,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-044",
+      "length": 7,
+      "grade": 9.794,
+      "maxGrade": 31.32,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-022",
+      "length": 10.3,
+      "grade": 9.471,
+      "maxGrade": 24.026,
+      "year": 2025
+    },
+    {
+      "hole": "PN-23-031A",
+      "length": 7,
+      "grade": 8.735,
+      "maxGrade": 47.971,
+      "year": 2023
+    },
+    {
+      "hole": "PML-25-015",
+      "length": 12.3,
+      "grade": 8.62,
+      "maxGrade": 29.122,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-070",
+      "length": 24.4,
+      "grade": 8.152,
+      "maxGrade": 24.672,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-067",
+      "length": 3.3,
+      "grade": 7.917,
+      "maxGrade": 17.846,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-063",
+      "length": 4,
+      "grade": 7.496,
+      "maxGrade": 14.876,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-095A",
+      "length": 8.1,
+      "grade": 7.483,
+      "maxGrade": 22.765,
+      "year": null
+    },
+    {
+      "hole": "PML-25-005",
+      "length": 5.2,
+      "grade": 7.478,
+      "maxGrade": 20.161,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-054",
+      "length": 4.5,
+      "grade": 7.228,
+      "maxGrade": 25.053,
+      "year": 2024
+    },
+    {
+      "hole": "PN-25-100",
+      "length": 3.9,
+      "grade": 7.044,
+      "maxGrade": 13.794,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-086",
+      "length": 4.6,
+      "grade": 6.815,
+      "maxGrade": 41.71,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-057",
+      "length": 3.8,
+      "grade": 6.488,
+      "maxGrade": 16.875,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-079",
+      "length": 12.9,
+      "grade": 6.375,
+      "maxGrade": 26.728,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-045",
+      "length": 11.5,
+      "grade": 6.276,
+      "maxGrade": 27.818,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-074",
+      "length": 2.5,
+      "grade": 5.932,
+      "maxGrade": 12.678,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-008",
+      "length": 1,
+      "grade": 5.777,
+      "maxGrade": 5.777,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-048",
+      "length": 12.2,
+      "grade": 5.456,
+      "maxGrade": 34.381,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-073",
+      "length": 5.1,
+      "grade": 5.405,
+      "maxGrade": 6.864,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-043",
+      "length": 7,
+      "grade": 5.315,
+      "maxGrade": 24.345,
+      "year": 2025
+    },
+    {
+      "hole": "PML-25-020",
+      "length": 20.9,
+      "grade": 5.249,
+      "maxGrade": 17.58,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-066",
+      "length": 5,
+      "grade": 5.079,
+      "maxGrade": 11.426,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-072",
+      "length": 16.6,
+      "grade": 5.004,
+      "maxGrade": 21.186,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-013",
+      "length": 2,
+      "grade": 4.781,
+      "maxGrade": 8.491,
+      "year": 2025
+    },
+    {
+      "hole": "PML-25-046",
+      "length": 11.9,
+      "grade": 4.726,
+      "maxGrade": 16.876,
+      "year": 2025
+    },
+    {
+      "hole": "PML-25-047",
+      "length": 6.7,
+      "grade": 4.65,
+      "maxGrade": 24.73,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-060",
+      "length": 7,
+      "grade": 4.567,
+      "maxGrade": 14.44,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-087",
+      "length": 2,
+      "grade": 4.344,
+      "maxGrade": 7.618,
+      "year": 2024
+    },
+    {
+      "hole": "PML-25-039",
+      "length": 1.7,
+      "grade": 4.262,
+      "maxGrade": 4.851,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-078",
+      "length": 12.8,
+      "grade": 4.126,
+      "maxGrade": 16.024,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-056",
+      "length": 2.5,
+      "grade": 4.122,
+      "maxGrade": 7.654,
+      "year": 2024
+    },
+    {
+      "hole": "PN-25-097",
+      "length": 5.7,
+      "grade": 4.1,
+      "maxGrade": 11.058,
+      "year": 2025
+    },
+    {
+      "hole": "PN-24-075",
+      "length": 6.8,
+      "grade": 3.967,
+      "maxGrade": 9.005,
+      "year": 2024
+    },
+    {
+      "hole": "PN-24-069",
+      "length": 15,
+      "grade": 3.899,
+      "maxGrade": 14.194,
+      "year": 2024
+    }
+  ],
+  "byYear": [
+    {
+      "YEAR": 2022,
+      "holes": 2,
+      "maxGrade": 1.174,
+      "totalM": 121.1,
+      "avgGrade": 0.072
+    },
+    {
+      "YEAR": 2023,
+      "holes": 6,
+      "maxGrade": 47.971,
+      "totalM": 345.19,
+      "avgGrade": 0.232
+    },
+    {
+      "YEAR": 2024,
+      "holes": 48,
+      "maxGrade": 75.102,
+      "totalM": 4026.84,
+      "avgGrade": 0.491
+    },
+    {
+      "YEAR": 2025,
+      "holes": 42,
+      "maxGrade": 56.739,
+      "totalM": 6758.7,
+      "avgGrade": 0.204
+    },
+    {
+      "YEAR": 2026,
+      "holes": 1,
+      "maxGrade": 30.376,
+      "totalM": 159.51,
+      "avgGrade": 1.291
+    }
+  ],
+  "hist": [
+    {
+      "bin": "0–0.5%",
+      "count": 9355
+    },
+    {
+      "bin": "0.5–1%",
+      "count": 240
+    },
+    {
+      "bin": "1–2%",
+      "count": 139
+    },
+    {
+      "bin": "2–3%",
+      "count": 59
+    },
+    {
+      "bin": "3–5%",
+      "count": 96
+    },
+    {
+      "bin": "5–8%",
+      "count": 57
+    },
+    {
+      "bin": "8–12%",
+      "count": 39
+    },
+    {
+      "bin": "12–20%",
+      "count": 50
+    },
+    {
+      "bin": "20–40%",
+      "count": 42
+    }
+  ],
+  "metalContrib": {
+    "Cu": 51.45,
+    "Au": 13.58,
+    "Ag": 3.13,
+    "Pd": 23.23,
+    "Pt": 8.62
+  },
+  "niskHoles": [
+    {
+      "hole": "PN-23-022",
+      "length": 0.5,
+      "grade": 5.396,
+      "maxGrade": 5.396,
+      "year": 2023
+    },
+    {
+      "hole": "TF-71-10",
+      "length": 4,
+      "grade": 4.297,
+      "maxGrade": 8.33,
+      "year": 2010
+    },
+    {
+      "hole": "PMN-25-004",
+      "length": 1,
+      "grade": 3.893,
+      "maxGrade": 3.893,
+      "year": 2025
+    },
+    {
+      "hole": "PN-22-008",
+      "length": 1.3,
+      "grade": 3.151,
+      "maxGrade": 3.963,
+      "year": 2022
+    },
+    {
+      "hole": "PN-22-012",
+      "length": 8.8,
+      "grade": 3.083,
+      "maxGrade": 5.731,
+      "year": 2022
+    },
+    {
+      "hole": "TF-31-07",
+      "length": 0.5,
+      "grade": 3.08,
+      "maxGrade": 3.08,
+      "year": 2007
+    },
+    {
+      "hole": "TF-56-08",
+      "length": 8.5,
+      "grade": 2.965,
+      "maxGrade": 4.301,
+      "year": 2008
+    },
+    {
+      "hole": "PN-23-027",
+      "length": 1.6,
+      "grade": 2.836,
+      "maxGrade": 2.936,
+      "year": 2023
+    },
+    {
+      "hole": "PN-23-042",
+      "length": 2,
+      "grade": 2.786,
+      "maxGrade": 2.787,
+      "year": 2023
+    },
+    {
+      "hole": "TF-47-07",
+      "length": 7,
+      "grade": 2.708,
+      "maxGrade": 3.774,
+      "year": 2007
+    },
+    {
+      "hole": "TF-26-07",
+      "length": 1,
+      "grade": 2.496,
+      "maxGrade": 3.201,
+      "year": 2007
+    },
+    {
+      "hole": "PN-22-014",
+      "length": 3.5,
+      "grade": 2.489,
+      "maxGrade": 3.116,
+      "year": 2022
+    },
+    {
+      "hole": "PN-23-028",
+      "length": 7.8,
+      "grade": 2.474,
+      "maxGrade": 3.088,
+      "year": 2023
+    },
+    {
+      "hole": "PN-23-036",
+      "length": 8.8,
+      "grade": 2.453,
+      "maxGrade": 5.517,
+      "year": 2023
+    },
+    {
+      "hole": "TF-60-08",
+      "length": 3.5,
+      "grade": 2.451,
+      "maxGrade": 3.274,
+      "year": 2008
+    },
+    {
+      "hole": "PN-21-006",
+      "length": 4.2,
+      "grade": 2.358,
+      "maxGrade": 3.362,
+      "year": 2021
+    },
+    {
+      "hole": "TF-05-07",
+      "length": 17.5,
+      "grade": 2.343,
+      "maxGrade": 3.336,
+      "year": 2007
+    },
+    {
+      "hole": "PN-22-009",
+      "length": 29.4,
+      "grade": 2.321,
+      "maxGrade": 7.405,
+      "year": 2022
+    },
+    {
+      "hole": "TF-33-07",
+      "length": 6,
+      "grade": 2.315,
+      "maxGrade": 5.407,
+      "year": 2007
+    },
+    {
+      "hole": "PN-21-005",
+      "length": 8.9,
+      "grade": 2.302,
+      "maxGrade": 2.84,
+      "year": 2021
+    },
+    {
+      "hole": "TF-66-08",
+      "length": 1.5,
+      "grade": 2.291,
+      "maxGrade": 4.258,
+      "year": 2008
+    },
+    {
+      "hole": "PN-23-035",
+      "length": 9.9,
+      "grade": 2.254,
+      "maxGrade": 3.229,
+      "year": 2023
+    },
+    {
+      "hole": "PN-22-010",
+      "length": 3.2,
+      "grade": 2.222,
+      "maxGrade": 3.457,
+      "year": 2022
+    },
+    {
+      "hole": "TF-25-07",
+      "length": 16.5,
+      "grade": 2.215,
+      "maxGrade": 3.449,
+      "year": 2007
+    },
+    {
+      "hole": "TF-46-07",
+      "length": 9.5,
+      "grade": 2.199,
+      "maxGrade": 3.16,
+      "year": 2007
+    }
+  ],
+  "nByYear": [
+    {
+      "YEAR": 2007,
+      "holes": 42,
+      "maxGrade": 5.407,
+      "totalM": 592.5,
+      "avgGrade": 0.741
+    },
+    {
+      "YEAR": 2008,
+      "holes": 18,
+      "maxGrade": 6.311,
+      "totalM": 264.4,
+      "avgGrade": 0.687
+    },
+    {
+      "YEAR": 2010,
+      "holes": 2,
+      "maxGrade": 8.33,
+      "totalM": 104.6,
+      "avgGrade": 0.347
+    },
+    {
+      "YEAR": 2011,
+      "holes": 11,
+      "maxGrade": 1.353,
+      "totalM": 365.9,
+      "avgGrade": 0.132
+    },
+    {
+      "YEAR": 2021,
+      "holes": 7,
+      "maxGrade": 3.789,
+      "totalM": 324.7,
+      "avgGrade": 0.564
+    },
+    {
+      "YEAR": 2022,
+      "holes": 11,
+      "maxGrade": 7.405,
+      "totalM": 1222.13,
+      "avgGrade": 0.28
+    },
+    {
+      "YEAR": 2023,
+      "holes": 15,
+      "maxGrade": 5.517,
+      "totalM": 781.34,
+      "avgGrade": 0.324
+    },
+    {
+      "YEAR": 2024,
+      "holes": 4,
+      "maxGrade": 1.744,
+      "totalM": 71.97,
+      "avgGrade": 0.099
+    },
+    {
+      "YEAR": 2025,
+      "holes": 9,
+      "maxGrade": 3.893,
+      "totalM": 710.25,
+      "avgGrade": 0.123
+    }
+  ]
+}

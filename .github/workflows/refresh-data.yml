@@ -1,0 +1,47 @@
+name: Refresh Drill Data
+
+on:
+  # Run automatically every Sunday at 2am UTC
+  schedule:
+    - cron: '0 2 * * 0'
+  # Also run whenever pnpn_data.xlsx is pushed (e.g. you drop in a new Excel)
+  push:
+    paths:
+      - 'pnpn_data.xlsx'
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install xlsx
+
+      - name: Run parse-and-update
+        run: node scripts/parse-and-update.js
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet src/pnpn-lion-nisk-model.jsx && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if data changed
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/pnpn-lion-nisk-model.jsx pnpn_computed.json
+          git commit -m "Auto-refresh drill data $(date -u +%Y-%m-%d)"
+          git push
