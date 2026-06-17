@@ -197,14 +197,32 @@ export default function App() {
   const [newsFetching, setNewsFetching] = useState(false);
 
   useEffect(()=>{
-    // Fetch trading quote (bid, ask, volume, price, day range)
-    const qUrl = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PNPN.V&fields=regularMarketPrice,regularMarketVolume,bid,ask,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,regularMarketChange,regularMarketChangePercent";
-    fetch("https://api.allorigins.win/get?url="+encodeURIComponent(qUrl))
-      .then(r=>r.json())
-      .then(w=>{
-        const q = JSON.parse(w.contents)?.quoteResponse?.result?.[0];
-        if(q) setQuote(q);
-      })
+    // Fetch trading data from Yahoo Finance chart endpoint (v8 — no auth required)
+    const tryFetch = (host) => {
+      const url = `https://${host}/v8/finance/chart/PNPN.V?interval=1d&range=5d`;
+      return fetch("https://api.allorigins.win/get?url="+encodeURIComponent(url))
+        .then(r=>r.json())
+        .then(w=>{
+          const data = JSON.parse(w.contents);
+          const meta = data?.chart?.result?.[0]?.meta;
+          if(!meta?.regularMarketPrice) throw new Error("no price");
+          // chart meta has: regularMarketPrice, regularMarketVolume, regularMarketDayHigh,
+          // regularMarketDayLow, previousClose, chartPreviousClose, regularMarketTime
+          setQuote({
+            regularMarketPrice:      meta.regularMarketPrice,
+            regularMarketVolume:     meta.regularMarketVolume,
+            regularMarketDayHigh:    meta.regularMarketDayHigh,
+            regularMarketDayLow:     meta.regularMarketDayLow,
+            regularMarketPreviousClose: meta.previousClose ?? meta.chartPreviousClose,
+            regularMarketChange:     meta.regularMarketPrice - (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice),
+            regularMarketChangePercent: ((meta.regularMarketPrice - (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice)) / (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice)) * 100,
+            bid: null,
+            ask: null,
+          });
+        });
+    };
+    tryFetch("query1.finance.yahoo.com")
+      .catch(()=>tryFetch("query2.finance.yahoo.com"))
       .catch(()=>{});
 
     // Scrape powermetallic.com/news/ for live news feed
@@ -659,8 +677,8 @@ export default function App() {
                   {[
                     ["Last Price",   "C$"+(quote.regularMarketPrice??0).toFixed(2),                          C.sage],
                     ["Change",       (quote.regularMarketChange>=0?"+":"")+(quote.regularMarketChange??0).toFixed(2)+" ("+((quote.regularMarketChangePercent??0).toFixed(2))+"%)", quote.regularMarketChange>=0?C.sage:"#ef5350"],
-                    ["Bid",          quote.bid ? "C$"+quote.bid.toFixed(2) : "—",                             C.text],
-                    ["Ask",          quote.ask ? "C$"+quote.ask.toFixed(2) : "—",                             C.text],
+                    ["Bid",          quote.bid!=null ? "C$"+quote.bid.toFixed(2) : "n/a",                    C.text],
+                    ["Ask",          quote.ask!=null ? "C$"+quote.ask.toFixed(2) : "n/a",                    C.text],
                     ["Day High",     "C$"+(quote.regularMarketDayHigh??0).toFixed(2),                         C.copper],
                     ["Day Low",      "C$"+(quote.regularMarketDayLow??0).toFixed(2),                          C.muted],
                     ["Volume",       (quote.regularMarketVolume??0).toLocaleString(),                         C.sub],
