@@ -230,21 +230,28 @@ export default function App() {
     fetch("https://api.allorigins.win/get?url="+encodeURIComponent("https://www.powermetallic.com/news/"))
       .then(r=>r.json())
       .then(w=>{
-        const html = w.contents;
-        // Parse <a> tags that look like news release links
-        const matches = [...html.matchAll(/<a[^>]+href="([^"]*\/[a-z0-9_-]{20,}\/)"[^>]*>([\s\S]*?)<\/a>/gi)];
+        const html = w.contents||"";
         const seen = new Set();
         const items = [];
-        for(const m of matches) {
-          const href = m[1].startsWith("http") ? m[1] : "https://www.powermetallic.com"+m[1];
-          const text = m[2].replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim();
-          if(text.length > 20 && !seen.has(href) && !href.includes("/news/") && href.includes("powermetallic")) {
-            seen.add(href);
-            items.push({headline:text, url:href});
-            if(items.length>=15) break;
+        // Match any <a href="/slug/"> where slug is long (news release pattern)
+        const re = /href="(\/[a-z0-9][a-z0-9_-]{15,}\/?)"/gi;
+        let m;
+        while((m=re.exec(html))!==null && items.length<15){
+          const path = m[1].endsWith("/")?m[1]:m[1]+"/";
+          if(seen.has(path)) continue;
+          // Skip nav/utility paths
+          if(/\/(news|contact|about|team|projects|investors|home|media|search)\/?$/i.test(path)) continue;
+          seen.add(path);
+          // Extract surrounding text — find the closest heading or strong tag after this href
+          const start = m.index;
+          const chunk = html.slice(start, start+600);
+          const titleM = chunk.match(/<(?:h[1-6]|strong|span|p)[^>]*>([\s\S]{10,200}?)<\/(?:h[1-6]|strong|span|p)>/i);
+          const headline = titleM ? titleM[1].replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim() : path.replace(/\//g," ").replace(/-/g," ").replace(/^\s+/,"").trim();
+          if(headline.length>10){
+            items.push({headline, url:"https://www.powermetallic.com"+path});
           }
         }
-        setLiveNews(items);
+        if(items.length>0) setLiveNews(items);
       })
       .catch(()=>{})
       .finally(()=>setNewsFetching(false));
@@ -467,6 +474,35 @@ export default function App() {
                   ))}
                 </div>
               </div>
+
+              {/* Live Trading Data */}
+              {quote ? (
+                <div style={{marginTop:12,background:"#0d1a0d",border:`1px solid ${C.sage}44`,borderRadius:6,padding:12}}>
+                  <div style={{color:C.sage,fontWeight:700,fontSize:11,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>PNPN.V — Live Market Data</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                    {[
+                      ["Last Price",    "C$"+(quote.regularMarketPrice??0).toFixed(2),  C.sage],
+                      ["Change",        (quote.regularMarketChange>=0?"+":"")+((quote.regularMarketChange??0).toFixed(2))+" ("+(quote.regularMarketChangePercent??0).toFixed(2)+"%)", quote.regularMarketChange>=0?C.sage:"#ef5350"],
+                      ["Day High",      "C$"+(quote.regularMarketDayHigh??0).toFixed(2), C.copper],
+                      ["Day Low",       "C$"+(quote.regularMarketDayLow??0).toFixed(2),  C.muted],
+                      ["Volume",        (quote.regularMarketVolume??0).toLocaleString(),  C.sub],
+                      ["Prev Close",    "C$"+(quote.regularMarketPreviousClose??0).toFixed(2), C.muted],
+                      ["NAV Prem/Disc", selPerSh>0?((quote.regularMarketPrice/selPerSh-1)*100).toFixed(1)+"%":"—", selPerSh>0?(quote.regularMarketPrice/selPerSh>=1?"#ef5350":C.sage):C.muted],
+                      ["Risked NAV/sh", "C$"+selPerSh.toFixed(2), C.gold],
+                    ].map(([l,v,c])=>(
+                      <div key={l} style={{background:C.surface,borderRadius:5,padding:"6px 8px"}}>
+                        <div style={{color:C.muted,fontSize:9,marginBottom:1}}>{l}</div>
+                        <div style={{color:c,fontWeight:700,fontSize:12}}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{color:C.muted,fontSize:9}}>Yahoo Finance · refreshes on load</div>
+                </div>
+              ) : (
+                <div style={{marginTop:12,background:C.surface,borderRadius:6,padding:10,color:C.muted,fontSize:11,textAlign:"center"}}>
+                  Loading live market data...
+                </div>
+              )}
             </Card>
 
             <Card>
@@ -669,31 +705,6 @@ export default function App() {
               </div>
             </Card>
 
-            {/* Live Trading Data */}
-            {quote && (
-              <Card style={{marginBottom:0}}>
-                <Hdr>PNPN.V — Live Market Data</Hdr>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:10,marginBottom:10}}>
-                  {[
-                    ["Last Price",   "C$"+(quote.regularMarketPrice??0).toFixed(2),                          C.sage],
-                    ["Change",       (quote.regularMarketChange>=0?"+":"")+(quote.regularMarketChange??0).toFixed(2)+" ("+((quote.regularMarketChangePercent??0).toFixed(2))+"%)", quote.regularMarketChange>=0?C.sage:"#ef5350"],
-                    ["Bid",          quote.bid!=null ? "C$"+quote.bid.toFixed(2) : "n/a",                    C.text],
-                    ["Ask",          quote.ask!=null ? "C$"+quote.ask.toFixed(2) : "n/a",                    C.text],
-                    ["Day High",     "C$"+(quote.regularMarketDayHigh??0).toFixed(2),                         C.copper],
-                    ["Day Low",      "C$"+(quote.regularMarketDayLow??0).toFixed(2),                          C.muted],
-                    ["Volume",       (quote.regularMarketVolume??0).toLocaleString(),                         C.sub],
-                    ["Prev Close",   "C$"+(quote.regularMarketPreviousClose??0).toFixed(2),                   C.muted],
-                    ["NAV Prem/Disc",selPerSh>0 ? ((quote.regularMarketPrice/selPerSh-1)*100).toFixed(1)+"%" : "—", selPerSh>0?(quote.regularMarketPrice/selPerSh-1)>=0?"#ef5350":C.sage:C.muted],
-                  ].map(([l,v,c])=>(
-                    <div key={l} style={{background:C.surface,borderRadius:6,padding:"8px 10px"}}>
-                      <div style={{color:C.muted,fontSize:10,marginBottom:2}}>{l}</div>
-                      <div style={{color:c,fontWeight:700,fontSize:13}}>{v}</div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{color:C.muted,fontSize:10}}>Live via Yahoo Finance · Refreshes on page load · NAV premium/discount vs current {navDiscount}%-risked NAV/share</div>
-              </Card>
-            )}
           </div>
 
           {/* Visual: NAV/sh across full range */}
