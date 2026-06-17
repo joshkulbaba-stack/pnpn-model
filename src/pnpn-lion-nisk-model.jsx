@@ -22,7 +22,7 @@ const PAY  = { cu:0.90, au:0.95, pd:0.78, ag:0.80, pt:0.78, ni:0.73, co:0.27 };
 const LB=2204.62, OZ=31.1035; // g per troy oz (correct for g/t → oz/t conversion)
 const SHARES_M = 237.195816; // fully diluted shares (237,195,816)
 
-const DEF_P = { cu:4.50, au:3200, pd:1000, ag:32, pt:950, ni:7.00, co:12.00 };
+const DEF_P = { cu:4.50, au:3200, pd:1000, ag:30, pt:1000, ni:7.00, co:12.00 };
 const TAX_RATE = 0.375; // ~37.5% effective: 26.5% fed+prov corporate + ~16% Quebec mining duties, partially offset by deductions
 
 function lionRevT(cueq, p) {
@@ -328,26 +328,33 @@ export default function App() {
   const postNavPerSh = selTot / postShares / fx * (1 - navDiscount/100);
   const dilution   = newShares / postShares * 100;
 
-  const Slider = ({label,field,min,max,step,unit}) => {
-    const isDecimal = field==="cu"||field==="ni"||field==="co";
+  const makeTicks = (min, max, step, maxTicks=12) => {
+    // find smallest tickStep that is a multiple of step and gives ≤ maxTicks labels
+    let tickStep = step;
+    const allSteps = Math.round((max - min) / step);
+    while (Math.round(allSteps / (tickStep / step)) > maxTicks) tickStep = +(tickStep + step).toFixed(6);
     const ticks = [];
-    for(let v=min; v<=max+0.001; v=+(v+step).toFixed(4)) ticks.push(+v.toFixed(4));
-    const maxTicks = 16;
-    const filtered = ticks.length <= maxTicks ? ticks :
-      ticks.filter((_,i)=>i===0||i===ticks.length-1||i%Math.ceil(ticks.length/maxTicks)===0);
+    for (let v = min; v <= max + step * 0.001; v = +(v + tickStep).toFixed(6)) ticks.push(+v.toFixed(6));
+    if (+ticks[ticks.length-1].toFixed(6) !== +max.toFixed(6)) ticks.push(+max.toFixed(6));
+    return ticks;
+  };
+
+  const Slider = ({label,field,min,max,step,unit,dp}) => {
+    const decimals = dp ?? (step < 1 ? 2 : 0);
+    const ticks = makeTicks(min, max, step);
     return (
       <div style={{marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
           <span style={{color:C.sub,fontSize:12}}>{label}</span>
-          <span style={{color:C.copper,fontSize:12,fontWeight:700}}>{unit}{p[field].toFixed(isDecimal?2:0)}</span>
+          <span style={{color:C.copper,fontSize:12,fontWeight:700}}>{unit}{p[field].toFixed(decimals)}</span>
         </div>
         <input type="range" min={min} max={max} step={step} value={p[field]}
           onChange={e=>setP(prev=>({...prev,[field]:+e.target.value}))}
           style={{width:"100%",accentColor:C.copper}}/>
         <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-          {filtered.map(v=>(
+          {ticks.map(v=>(
             <span key={v} style={{fontSize:9,color:p[field]===v?C.copper:C.muted,fontWeight:p[field]===v?700:400}}>
-              {unit}{isDecimal?v.toFixed(2):v}
+              {unit}{v.toFixed(decimals)}
             </span>
           ))}
         </div>
@@ -599,8 +606,8 @@ export default function App() {
                   onChange={e=>setFx(+e.target.value)}
                   style={{width:"100%",accentColor:C.sky}}/>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                  {[0.65,0.68,0.70,0.72,0.73,0.75,0.78,0.80,0.82,0.85].map(v=>(
-                    <span key={v} style={{fontSize:9,color:Math.abs(fx-v)<0.005?C.sky:C.muted,fontWeight:Math.abs(fx-v)<0.005?700:400}}>{v.toFixed(2)}</span>
+                  {[0.65,0.67,0.69,0.71,0.73,0.75,0.77,0.79,0.81,0.83,0.85].map(v=>(
+                    <span key={v} style={{fontSize:9,color:fx===v?C.sky:C.muted,fontWeight:fx===v?700:400}}>{v.toFixed(2)}</span>
                   ))}
                 </div>
               </div>
@@ -613,7 +620,7 @@ export default function App() {
                   onChange={e=>setNavDiscount(+e.target.value)}
                   style={{width:"100%",accentColor:C.gold}}/>
                 <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                  {[10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90].map(v=>(
+                  {[10,20,30,40,50,60,70,80,90].map(v=>(
                     <span key={v} style={{fontSize:9,color:navDiscount===v?C.gold:C.muted,fontWeight:navDiscount===v?700:400}}>{v}%</span>
                   ))}
                 </div>
@@ -809,12 +816,12 @@ export default function App() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16,marginBottom:16}}>
             <Card>
               <Hdr>Metal Prices</Hdr>
-              <Slider label="Copper (USD/lb)"  field="cu"  min={3}   max={12}   step={0.05} unit="$"/>
-              <Slider label="Palladium (USD/oz)" field="pd" min={600} max={4000} step={25}   unit="$"/>
-              <Slider label="Gold (USD/oz)"    field="au"  min={2000} max={6000} step={50}   unit="$"/>
-              <Slider label="Nickel (USD/lb)"  field="ni"  min={5}   max={25}   step={0.25} unit="$"/>
-              <Slider label="Silver (USD/oz)"  field="ag"  min={20}  max={100}  step={1}    unit="$"/>
-              <Slider label="Platinum (USD/oz)" field="pt" min={600} max={3000} step={25}   unit="$"/>
+              <Slider label="Copper (USD/lb)"   field="cu" min={3}    max={12}   step={0.25} unit="$" dp={2}/>
+              <Slider label="Palladium (USD/oz)" field="pd" min={600}  max={4000} step={100}  unit="$" dp={0}/>
+              <Slider label="Gold (USD/oz)"      field="au" min={2000} max={6000} step={100}  unit="$" dp={0}/>
+              <Slider label="Nickel (USD/lb)"    field="ni" min={5}    max={25}   step={0.25} unit="$" dp={2}/>
+              <Slider label="Silver (USD/oz)"    field="ag" min={20}   max={100}  step={5}    unit="$" dp={0}/>
+              <Slider label="Platinum (USD/oz)"  field="pt" min={600}  max={3000} step={100}  unit="$" dp={0}/>
               <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:6}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Nisk add-on NPV</div>
                 <div style={{color:C.sky,fontWeight:700,fontSize:16}}>${niskN.toFixed(0)}M</div>
