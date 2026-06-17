@@ -240,6 +240,8 @@ export default function App() {
   const [raisePriceInput, setRaisePriceInput] = useState("");
   const [liveNews, setLiveNews] = useState([]);
   const [newsFetching, setNewsFetching] = useState(false);
+  const [scenarios, setScenarios] = useState([]);
+  const [scenarioNameInput, setScenarioNameInput] = useState("");
 
   useEffect(()=>{
     // Fetch trading data — try query1 then query2, both proxies
@@ -318,6 +320,8 @@ export default function App() {
     {id:"catalyst",  label:"Catalysts"},
     {id:"news",      label:"News Log"},
     {id:"capexsens", label:"CAPEX/OPEX Sens."},
+    {id:"scenarios", label:"Scenarios"},
+    {id:"breakeven", label:"Break-even"},
   ];
 
   // Equity dilution calcs
@@ -327,6 +331,48 @@ export default function App() {
   const postShares = sharesM + newShares;
   const postNavPerSh = selTot / postShares / fx * (1 - navDiscount/100);
   const dilution   = newShares / postShares * 100;
+
+  // ── Scenario helpers ────────────────────────────────────────────────────
+  const saveScenario = (name) => {
+    const snap = {
+      name: name || `Scenario ${scenarios.length+1}`,
+      p:{...p}, selMt, selCuEq, navDiscount, discountRate, mineLife, sharesM, fx,
+      npvPreTax: selTot, npvAfterTax: selTot*(1-TAX_RATE),
+      navPerSh: selPerSh, savedAt: new Date().toLocaleString(),
+    };
+    setScenarios(prev => {
+      const idx = prev.findIndex(s=>s.name===snap.name);
+      if(idx>=0){ const n=[...prev]; n[idx]=snap; return n; }
+      return [...prev.slice(-2), snap];
+    });
+  };
+
+  // ── Break-even solver (binary search) ───────────────────────────────────
+  const beSolve = (targetNAV, fn, lo, hi, dp=4) => {
+    for(let i=0;i<60;i++){
+      const mid=(lo+hi)/2;
+      if(fn(mid)>targetNAV) hi=mid; else lo=mid;
+      if(hi-lo<Math.pow(10,-dp)) break;
+    }
+    return (lo+hi)/2;
+  };
+  const bePrice = livePrice ?? selPerSh;
+  const beTargetNAV = bePrice * sharesM * fx / (1 - navDiscount/100);
+  // implied Cu price
+  const beCu = useMemo(()=>beSolve(beTargetNAV,
+    cu=>{ const pp={...p,cu}; return calcNPV(lionRevT(selCuEq,pp),28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife)+calcNPV(niskRevT(pp),55,5.43e6,250,discountRate/100,mineLife); },
+    0.5,30),
+  [beTargetNAV,p,selCuEq,selMt,discountRate,mineLife]);
+  // implied tonnage
+  const beMt = useMemo(()=>beSolve(beTargetNAV,
+    mt=>calcNPV(lionRevT(selCuEq,p),28,mt*1e6,400+(mt-10)*20,discountRate/100,mineLife)+niskN,
+    1,50),
+  [beTargetNAV,p,selCuEq,discountRate,mineLife,niskN]);
+  // implied CuEq grade
+  const beCuEq = useMemo(()=>beSolve(beTargetNAV,
+    cueq=>calcNPV(lionRevT(cueq,p),28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife)+niskN,
+    0.1,20),
+  [beTargetNAV,p,selMt,discountRate,mineLife,niskN]);
 
   const makeTicks = (min, max, step, maxTicks=12) => {
     // find smallest tickStep that is a multiple of step and gives ≤ maxTicks labels
@@ -806,6 +852,35 @@ export default function App() {
             <div style={{color:C.muted,fontSize:12,marginTop:8}}>
               Highlighted bins (3–12% CuEq) represent the analyst guidance grade range as a diluted average. The vast majority of samples are low-grade / waste; the MRE will model the high-grade core with appropriate dilution.
             </div>
+          </Card>
+
+          {/* Save Scenario */}
+          <Card style={{marginTop:14}}>
+            <Hdr>Save Current Scenario</Hdr>
+            <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+              <input value={scenarioNameInput} onChange={e=>setScenarioNameInput(e.target.value)}
+                placeholder="e.g. Bull Case, Bear Case, Base…"
+                style={{flex:1,minWidth:180,background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:"8px 12px",color:C.text,fontSize:13}}/>
+              {["Bear","Base","Bull"].map(label=>(
+                <button key={label} onClick={()=>{ saveScenario(label); setScenarioNameInput(""); }}
+                  style={{background:label==="Bull"?C.sage+"33":label==="Bear"?"#ef535033":"#ff6f0033",
+                    border:`1px solid ${label==="Bull"?C.sage:label==="Bear"?"#ef5350":"#ff6f00"}`,
+                    borderRadius:6,padding:"8px 14px",color:label==="Bull"?C.sage:label==="Bear"?"#ef5350":"#ff6f00",
+                    cursor:"pointer",fontSize:12,fontWeight:700}}>
+                  Save as {label}
+                </button>
+              ))}
+              <button onClick={()=>{ saveScenario(scenarioNameInput); setScenarioNameInput(""); }}
+                style={{background:C.copper+"22",border:`1px solid ${C.copper}`,borderRadius:6,
+                  padding:"8px 14px",color:C.copper,cursor:"pointer",fontSize:12,fontWeight:700}}>
+                Save Custom
+              </button>
+            </div>
+            {scenarios.length>0 && (
+              <div style={{color:C.muted,fontSize:11,marginTop:8}}>
+                {scenarios.length} scenario{scenarios.length>1?"s":""} saved — view in <span style={{color:C.copper,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setTab("scenarios")}>Scenarios tab</span>
+              </div>
+            )}
           </Card>
         </div>
       )}
@@ -1490,6 +1565,155 @@ export default function App() {
           </div>
         );
       })()}
+
+      {/* ══════ SCENARIOS TAB ══════ */}
+      {tab==="scenarios" && (
+        <div>
+          <Card style={{marginBottom:14,background:"#0d1117",border:`1px solid ${C.border}`}}>
+            <div style={{color:C.sub,fontSize:12,lineHeight:1.6}}>
+              Save up to 3 named scenarios from the <span style={{color:C.copper,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setTab("mre")}>MRE Range tab</span>. Each snapshot captures all metal prices, tonnage, grade, discount rate, mine life, FX, shares, and NAV discount at the time of saving.
+            </div>
+          </Card>
+          {scenarios.length===0 ? (
+            <Card><div style={{color:C.muted,textAlign:"center",padding:40}}>No scenarios saved yet. Go to the MRE Range tab, set your assumptions, and click Save.</div></Card>
+          ) : (
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",minWidth:500}}>
+                <thead>
+                  <tr style={{borderBottom:`2px solid ${C.border}`}}>
+                    <th style={{color:C.muted,fontSize:11,padding:"8px 14px",textAlign:"left",fontWeight:600}}>Metric</th>
+                    {scenarios.map(s=>(
+                      <th key={s.name} style={{color:C.copper,fontSize:12,padding:"8px 14px",textAlign:"right",fontWeight:700}}>
+                        {s.name}
+                        <div style={{color:C.muted,fontSize:9,fontWeight:400}}>{s.savedAt}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    {label:"Copper (USD/lb)",    fmt:s=>`$${s.p.cu.toFixed(2)}`},
+                    {label:"Gold (USD/oz)",       fmt:s=>`$${s.p.au.toFixed(0)}`},
+                    {label:"Palladium (USD/oz)",  fmt:s=>`$${s.p.pd.toFixed(0)}`},
+                    {label:"Silver (USD/oz)",     fmt:s=>`$${s.p.ag.toFixed(0)}`},
+                    {label:"Platinum (USD/oz)",   fmt:s=>`$${s.p.pt.toFixed(0)}`},
+                    {label:"Nickel (USD/lb)",     fmt:s=>`$${s.p.ni.toFixed(2)}`},
+                    {label:"─────────────────",  fmt:()=>""},
+                    {label:"Tonnage (Mt)",        fmt:s=>`${s.selMt} Mt`},
+                    {label:"CuEq Grade",         fmt:s=>`${s.selCuEq.toFixed(2)}%`},
+                    {label:"Mine Life",          fmt:s=>`${s.mineLife} yrs`},
+                    {label:"Discount Rate",      fmt:s=>`${s.discountRate}%`},
+                    {label:"USD/CAD FX",         fmt:s=>`${s.fx.toFixed(2)}`},
+                    {label:"Shares (M)",         fmt:s=>`${s.sharesM.toFixed(1)}M`},
+                    {label:"NAV Discount",       fmt:s=>`${s.navDiscount}%`},
+                    {label:"─────────────────",  fmt:()=>""},
+                    {label:"Pre-Tax NPV8 ($M)",  fmt:s=>`$${s.npvPreTax.toFixed(0)}M`,  color:C.text},
+                    {label:"After-Tax NPV8 ($M)",fmt:s=>`$${s.npvAfterTax.toFixed(0)}M`, color:C.sage},
+                    {label:"Risked NAV/Share",   fmt:s=>`C$${s.navPerSh.toFixed(2)}`,    color:C.copper, bold:true},
+                  ].map((row,i)=>(
+                    <tr key={i} style={{background:i%2===1?C.surface+"66":"transparent",borderBottom:`1px solid ${C.border}11`}}>
+                      <td style={{padding:"7px 14px",color:row.label.startsWith("─")?C.border:C.muted,fontSize:11}}>{row.label.startsWith("─")?"":row.label}</td>
+                      {scenarios.map(s=>(
+                        <td key={s.name} style={{padding:"7px 14px",textAlign:"right",
+                          color:row.color||(row.label.startsWith("─")?C.border:C.text),
+                          fontWeight:row.bold?700:400,fontSize:row.bold?14:12}}>
+                          {row.label.startsWith("─")?"":row.fmt(s)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {scenarios.length>0 && (
+            <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
+              {scenarios.map(s=>(
+                <button key={s.name}
+                  onClick={()=>{ setP(s.p); setSelMt(s.selMt); setSelCuEq(s.selCuEq); setNavDiscount(s.navDiscount); setDiscountRate(s.discountRate); setMineLife(s.mineLife); setFx(s.fx); setSharesInput(String(s.sharesM)); setTab("mre"); }}
+                  style={{background:C.copper+"22",border:`1px solid ${C.copper}`,borderRadius:6,padding:"8px 14px",color:C.copper,cursor:"pointer",fontSize:12,fontWeight:700}}>
+                  Load "{s.name}"
+                </button>
+              ))}
+              <button onClick={()=>setScenarios([])}
+                style={{background:"#ef535011",border:"1px solid #ef5350",borderRadius:6,padding:"8px 14px",color:"#ef5350",cursor:"pointer",fontSize:12}}>
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════ BREAK-EVEN TAB ══════ */}
+      {tab==="breakeven" && (
+        <div>
+          <Card style={{marginBottom:14,background:"#0d1117",border:`1px solid ${C.border}`}}>
+            <div style={{color:C.sub,fontSize:12,lineHeight:1.7}}>
+              Given the current share price, what assumptions is the market implying? The model works backwards from price → implied NAV → solves for each variable independently, holding all others at current settings.
+              {livePrice ? <span style={{color:C.sage}}> Using live price: <strong>C${livePrice.toFixed(2)}</strong></span>
+                         : <span style={{color:"#ef5350"}}> Live price unavailable — using current model NAV/share as reference.</span>}
+            </div>
+          </Card>
+
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:14}}>
+            {/* Reference box */}
+            <Card>
+              <Hdr>Reference Inputs (current settings)</Hdr>
+              {[
+                ["Share price (C$)",      `C$${bePrice.toFixed(2)}`],
+                ["Shares (M dil.)",       `${sharesM.toFixed(1)}M`],
+                ["NAV discount applied",  `${navDiscount}%`],
+                ["FX (USD/CAD)",          `${fx.toFixed(2)}`],
+                ["Discount rate",         `${discountRate}%`],
+                ["Mine life",             `${mineLife} yrs`],
+                ["Target NAV (implied)",  `$${beTargetNAV.toFixed(0)}M`],
+              ].map(([l,v])=>(
+                <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid ${C.border}22`,fontSize:12}}>
+                  <span style={{color:C.muted}}>{l}</span>
+                  <span style={{color:C.text,fontWeight:600}}>{v}</span>
+                </div>
+              ))}
+            </Card>
+
+            {/* Implied variables */}
+            <Card>
+              <Hdr>What the Market is Implying</Hdr>
+              <div style={{marginBottom:16}}>
+                <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Implied Copper Price</div>
+                <div style={{fontSize:28,fontWeight:800,color:C.copper}}>${beCu.toFixed(2)}<span style={{fontSize:14,color:C.muted,fontWeight:400}}>/lb</span></div>
+                <div style={{color:C.muted,fontSize:11,marginTop:2}}>vs current assumption: ${p.cu.toFixed(2)}/lb &nbsp;
+                  <span style={{color:beCu>p.cu?C.sage:"#ef5350",fontWeight:700}}>{beCu>p.cu?"▲ market pricing in upside":"▼ market pricing in discount"}</span>
+                </div>
+              </div>
+              <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14,marginBottom:16}}>
+                <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Implied Tonnage (at {selCuEq}% CuEq, Cu ${p.cu.toFixed(2)})</div>
+                <div style={{fontSize:28,fontWeight:800,color:C.sky}}>{beMt.toFixed(1)}<span style={{fontSize:14,color:C.muted,fontWeight:400}}> Mt</span></div>
+                <div style={{color:C.muted,fontSize:11,marginTop:2}}>vs current: {selMt} Mt &nbsp;
+                  <span style={{color:beMt>selMt?C.sage:"#ef5350",fontWeight:700}}>{beMt>selMt?"▲ market expects more tonnes":"▼ market expects fewer tonnes"}</span>
+                </div>
+              </div>
+              <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+                <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Implied CuEq Grade (at {selMt} Mt, Cu ${p.cu.toFixed(2)})</div>
+                <div style={{fontSize:28,fontWeight:800,color:C.gold}}>{beCuEq.toFixed(2)}<span style={{fontSize:14,color:C.muted,fontWeight:400}}>% CuEq</span></div>
+                <div style={{color:C.muted,fontSize:11,marginTop:2}}>vs current: {selCuEq}% &nbsp;
+                  <span style={{color:beCuEq>selCuEq?C.sage:"#ef5350",fontWeight:700}}>{beCuEq>selCuEq?"▲ market expects higher grade":"▼ market expects lower grade"}</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Interpretation */}
+            <Card>
+              <Hdr>How to Read This</Hdr>
+              <div style={{fontSize:12,color:C.sub,lineHeight:1.8}}>
+                <p style={{marginTop:0}}><strong style={{color:C.copper}}>Implied Cu price</strong> answers: "if tonnage and grade are right, what Cu price makes the stock fairly valued?" If it's below spot, the stock looks cheap on Cu alone.</p>
+                <p><strong style={{color:C.sky}}>Implied tonnage</strong> answers: "if Cu and grade are right, how many tonnes does the market need to justify this price?" Compare against the MRE range to see if it's achievable.</p>
+                <p><strong style={{color:C.gold}}>Implied grade</strong> answers: "if Cu and tonnes are right, what average CuEq does the deposit need?" Useful for benchmarking against analyst guidance.</p>
+                <p style={{marginBottom:0,color:C.muted,fontSize:11}}>All three run independent searches — change metal prices, NAV discount, or tonnage on the MRE tab and the implied values update instantly.</p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
 
       </div>
     </div>
