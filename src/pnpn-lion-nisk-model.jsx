@@ -197,64 +197,75 @@ export default function App() {
   const [newsFetching, setNewsFetching] = useState(false);
 
   useEffect(()=>{
-    // Fetch trading data from Yahoo Finance chart endpoint (v8 — no auth required)
-    const tryFetch = (host) => {
-      const url = `https://${host}/v8/finance/chart/PNPN.V?interval=1d&range=5d`;
-      return fetch("https://api.allorigins.win/get?url="+encodeURIComponent(url))
+    // Fetch trading data — try query1 then query2, both proxies
+    const yahooProxies = [
+      u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+      u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    ];
+    const yahooHosts = ["query1.finance.yahoo.com","query2.finance.yahoo.com"];
+    const tryQuote = (hi, pi) => {
+      if(hi>=yahooHosts.length) return Promise.reject("all yahoo hosts failed");
+      if(pi>=yahooProxies.length) return tryQuote(hi+1, 0);
+      const url = `https://${yahooHosts[hi]}/v8/finance/chart/PNPN.V?interval=1d&range=5d`;
+      return fetch(yahooProxies[pi](url))
         .then(r=>r.json())
         .then(w=>{
-          const data = JSON.parse(w.contents);
+          const raw = typeof w==="string"?w:(w.contents||"");
+          const data = JSON.parse(raw);
           const meta = data?.chart?.result?.[0]?.meta;
           if(!meta?.regularMarketPrice) throw new Error("no price");
-          // chart meta has: regularMarketPrice, regularMarketVolume, regularMarketDayHigh,
-          // regularMarketDayLow, previousClose, chartPreviousClose, regularMarketTime
+          const prev = meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice;
           setQuote({
-            regularMarketPrice:      meta.regularMarketPrice,
-            regularMarketVolume:     meta.regularMarketVolume,
-            regularMarketDayHigh:    meta.regularMarketDayHigh,
-            regularMarketDayLow:     meta.regularMarketDayLow,
-            regularMarketPreviousClose: meta.previousClose ?? meta.chartPreviousClose,
-            regularMarketChange:     meta.regularMarketPrice - (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice),
-            regularMarketChangePercent: ((meta.regularMarketPrice - (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice)) / (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice)) * 100,
-            bid: null,
-            ask: null,
+            regularMarketPrice: meta.regularMarketPrice,
+            regularMarketVolume: meta.regularMarketVolume,
+            regularMarketDayHigh: meta.regularMarketDayHigh,
+            regularMarketDayLow: meta.regularMarketDayLow,
+            regularMarketPreviousClose: prev,
+            regularMarketChange: meta.regularMarketPrice - prev,
+            regularMarketChangePercent: ((meta.regularMarketPrice - prev) / prev) * 100,
+            bid: null, ask: null,
           });
-        });
+        })
+        .catch(()=>tryQuote(hi, pi+1));
     };
-    tryFetch("query1.finance.yahoo.com")
-      .catch(()=>tryFetch("query2.finance.yahoo.com"))
-      .catch(()=>{});
+    tryQuote(0,0).catch(()=>{});
 
-    // Scrape powermetallic.com/news/ for live news feed
+    // Scrape powermetallic.com/news/ — try multiple proxies in sequence
     setNewsFetching(true);
-    fetch("https://api.allorigins.win/get?url="+encodeURIComponent("https://www.powermetallic.com/news/"))
-      .then(r=>r.json())
-      .then(w=>{
-        const html = w.contents||"";
-        const seen = new Set();
-        const items = [];
-        // Match any <a href="/slug/"> where slug is long (news release pattern)
-        const re = /href="(\/[a-z0-9][a-z0-9_-]{15,}\/?)"/gi;
-        let m;
-        while((m=re.exec(html))!==null && items.length<15){
-          const path = m[1].endsWith("/")?m[1]:m[1]+"/";
-          if(seen.has(path)) continue;
-          // Skip nav/utility paths
-          if(/\/(news|contact|about|team|projects|investors|home|media|search)\/?$/i.test(path)) continue;
+    const newsUrl = "https://www.powermetallic.com/news/";
+    const proxies = [
+      u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+      u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    ];
+    const parseNews = (html) => {
+      // Structure: <a href="/long-slug-here/">Headline text here</a>
+      const re = /<a\s+href="(\/[a-z0-9][a-z0-9_-]{15,}\/?)"[^>]*>\s*([^<]{20,300}?)\s*<\/a>/gi;
+      const items = [], seen = new Set();
+      let m;
+      while((m=re.exec(html))!==null && items.length<15){
+        const path = m[1].endsWith("/")?m[1]:m[1]+"/";
+        const headline = m[2].replace(/\s+/g," ").trim();
+        if(!seen.has(path) && !/\/(news|contact|about|team|projects|investors|home|media|search)\/?$/i.test(path)){
           seen.add(path);
-          // Extract surrounding text — find the closest heading or strong tag after this href
-          const start = m.index;
-          const chunk = html.slice(start, start+600);
-          const titleM = chunk.match(/<(?:h[1-6]|strong|span|p)[^>]*>([\s\S]{10,200}?)<\/(?:h[1-6]|strong|span|p)>/i);
-          const headline = titleM ? titleM[1].replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim() : path.replace(/\//g," ").replace(/-/g," ").replace(/^\s+/,"").trim();
-          if(headline.length>10){
-            items.push({headline, url:"https://www.powermetallic.com"+path});
-          }
+          items.push({headline, url:"https://www.powermetallic.com"+path});
         }
-        if(items.length>0) setLiveNews(items);
-      })
-      .catch(()=>{})
-      .finally(()=>setNewsFetching(false));
+      }
+      return items;
+    };
+    const tryProxy = (i) => {
+      if(i>=proxies.length) return Promise.reject("all proxies failed");
+      return fetch(proxies[i](newsUrl))
+        .then(r=>r.json())
+        .then(w=>{
+          // allorigins wraps in {contents}, codetabs returns raw text
+          const html = typeof w === "string" ? w : (w.contents||"");
+          const items = parseNews(html);
+          if(items.length===0) throw new Error("no items parsed");
+          setLiveNews(items);
+        })
+        .catch(()=>tryProxy(i+1));
+    };
+    tryProxy(0).catch(()=>{}).finally(()=>setNewsFetching(false));
   },[]);
 
   const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
