@@ -355,7 +355,7 @@ export default function App() {
                   sub={`Ni $${p.ni}/lb · Rev $${niskRevT(p).toFixed(0)}/t vs $55 opex`}/>
                 <Kpi label="Combined NPV (Pre-Tax)" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage}/>
                 <Kpi label={`NAV/share (${navDiscount}% risked)`} value={"C$"+selPerSh.toFixed(2)} color={C.gold}
-                  sub="237.2M dil. shares · 0.73 FX"/>
+                  sub={`${sharesM.toFixed(1)}M dil. shares · 0.73 FX`}/>
                 <Kpi label="Gross Rev/t (Lion)" value={"$"+selRev.toFixed(0)} unit="USD/t" color={C.copper}
                   sub={"Net $"+(selRev-28).toFixed(0)+"/t after $28 opex"}/>
               </div>
@@ -1005,7 +1005,7 @@ export default function App() {
             <Hdr>Model-Wide Assumptions</Hdr>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
               {[
-                ["Diluted Shares","237.2M","fully diluted"],
+                ["Diluted Shares",`${sharesM.toFixed(1)}M`,"fully diluted"],
                 ["USD/CAD FX","0.73","for NAV/share"],
                 ["Discount Rate","8% default","adjustable 6–15%"],
                 ["NAV Discount","50% default","adjustable 10–90%"],
