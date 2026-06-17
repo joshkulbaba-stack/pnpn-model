@@ -84,7 +84,7 @@ function buildCuSens(p, niskAddon, rate=0.08, life=15, shares=306, fx=0.73) {
   });
 }
 
-// Cut-off grade data (computed from RAW.lion.hist bin centres)
+// Grade distribution from raw drill intervals — directional only, not a resource model
 const COG_DATA = [
   {cog:"0%",   tonnes:100,  grade:0.84},
   {cog:"0.5%", tonnes:71.2, grade:1.17},
@@ -316,7 +316,7 @@ export default function App() {
     {id:"pxsens",    label:"Cu Price Sens."},
     {id:"data",      label:"Drill Data"},
     {id:"assumptions", label:"Assumptions"},
-    {id:"cutoff",    label:"Cut-off Sensitivity"},
+    {id:"cutoff",    label:"Grade Distribution"},
     {id:"catalyst",  label:"Catalysts"},
     {id:"news",      label:"News Log"},
     {id:"capexsens", label:"CAPEX/OPEX Sens."},
@@ -1363,13 +1363,13 @@ export default function App() {
       {tab==="cutoff" && (
         <div>
           <Card style={{marginBottom:14,background:"#001a10",border:`1px solid ${C.sage}44`}}>
-            <div style={{color:C.sage,fontWeight:700,fontSize:13,marginBottom:6}}>Grade-Tonnage Relationship — Lion Zone</div>
+            <div style={{color:C.sage,fontWeight:700,fontSize:13,marginBottom:6}}>Drill Interval Grade Distribution — Lion Zone</div>
             <div style={{color:C.sub,fontSize:12,lineHeight:1.65}}>
-              Based on 9,878 Lion Zone assay records. Higher cut-off removes low-grade material, increasing avg grade but reducing total resource. Values shown as % of total assay metres.
+              Illustrative grade distribution based on raw drill intervals — <strong style={{color:C.sage}}>not a resource model</strong>. Shows how the proportion of drill metres and average CuEq shift at different grade thresholds. Absolute percentages are directional only — a proper cut-off sensitivity requires a 3D block model, density estimates, and domain constraints. Use the MRE Range tab for resource scenario analysis.
             </div>
           </Card>
           <Card style={{marginBottom:14}}>
-            <Hdr>Cut-off Grade vs. % Metres Remaining &amp; Avg CuEq Grade</Hdr>
+            <Hdr>Grade Threshold vs. % Drill Metres &amp; Avg CuEq — Illustrative</Hdr>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={COG_DATA} margin={{top:10,right:60,left:10,bottom:20}}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
@@ -1388,12 +1388,12 @@ export default function App() {
             </ResponsiveContainer>
           </Card>
           <Card>
-            <Hdr>Cut-off Grade Table</Hdr>
+            <Hdr>Grade Threshold Table</Hdr>
             <div style={{overflowX:"auto"}}>
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
                   <tr style={{borderBottom:`1px solid ${C.border}`}}>
-                    {["Cut-off","% Metres Remaining","Avg CuEq Grade","Notes"].map(h=>(
+                    {["Grade Threshold","% Drill Metres","Avg CuEq Grade","Notes"].map(h=>(
                       <th key={h} style={{color:C.muted,fontSize:11,padding:"6px 12px",textAlign:"left",fontWeight:600}}>{h}</th>
                     ))}
                   </tr>
@@ -1415,7 +1415,7 @@ export default function App() {
               </table>
             </div>
             <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-              Based on 9,878 Lion Zone assay records. Grade-tonnage relationship — higher cut-off removes low-grade material, increasing avg grade but reducing total resource. Values are % of total assay metres, not absolute resource tonnes.
+              Raw drill interval data only — not a substitute for a NI 43-101 resource estimate. Directional trends are valid; absolute numbers are not. MRE expected Q3 2026.
             </div>
           </Card>
         </div>
