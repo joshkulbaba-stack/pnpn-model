@@ -271,7 +271,7 @@ export default function App() {
               <div style={{flex:"1 1 220px",minWidth:0}}>
                 <div style={{color:C.sub,fontSize:11,fontWeight:700,marginBottom:6}}>ANALYST RANGE BOUNDS</div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:6}}>
-                  {[["Low End","10Mt @ 4.25%","$1.0B NPV"],["Base","12Mt @ 5.5%","$1.8B NPV"],["High End","14Mt @ 7.0%","$3.0B NPV"]].map(([l,v,n])=>(
+                  {[["Low End","10Mt @ 4.25%","~$1.5B pre-tax NPV"],["Base","12Mt @ 5.5%","~$2.5B pre-tax NPV"],["High End","14Mt @ 7.0%","~$4.0B pre-tax NPV"]].map(([l,v,n])=>(
                     <div key={l} style={{background:C.card,borderRadius:6,padding:"8px 10px"}}>
                       <div style={{color:C.muted,fontSize:10}}>{l}</div>
                       <div style={{color:C.copper,fontWeight:700,fontSize:13}}>{v}</div>
@@ -343,10 +343,10 @@ export default function App() {
             <Card>
               <Hdr>Scenario Output</Hdr>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:14,marginBottom:14}}>
-                <Kpi label="Lion NPV (8%)" value={"$"+selLNPV.toFixed(0)} unit="M" color={C.copper} big/>
-                <Kpi label="Nisk NPV (8%)" value={(niskN>=0?"$":"−$")+Math.abs(niskN).toFixed(0)} unit="M" color={niskN>=0?C.sky:"#ef5350"} big
+                <Kpi label={`Lion NPV — Pre-Tax (${discountRate}%)`} value={"$"+selLNPV.toFixed(0)} unit="M" color={C.copper} big/>
+                <Kpi label={`Nisk NPV — Pre-Tax (${discountRate}%)`} value={(niskN>=0?"$":"−$")+Math.abs(niskN).toFixed(0)} unit="M" color={niskN>=0?C.sky:"#ef5350"} big
                   sub={`Ni $${p.ni}/lb · Rev $${niskRevT(p).toFixed(0)}/t vs $55 opex`}/>
-                <Kpi label="Combined NPV" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage}/>
+                <Kpi label="Combined NPV (Pre-Tax)" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage}/>
                 <Kpi label={`NAV/share (${navDiscount}% risked)`} value={"C$"+selPerSh.toFixed(2)} color={C.gold}
                   sub="237.2M dil. shares · 0.73 FX"/>
                 <Kpi label="Gross Rev/t (Lion)" value={"$"+selRev.toFixed(0)} unit="USD/t" color={C.copper}
@@ -411,7 +411,7 @@ export default function App() {
 
           {/* Visual: NAV/sh across full range */}
           <Card style={{marginBottom:14}}>
-            <Hdr>Unrisked NAV/Share (C$) Across Analyst Guidance Range — at Cu ${p.cu}/lb, Pd ${p.pd}/oz</Hdr>
+            <Hdr>Unrisked Pre-Tax NAV/Share (C$) Across Analyst Guidance Range — at Cu ${p.cu}/lb, Pd ${p.pd}/oz</Hdr>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart margin={{top:10,right:30,left:10,bottom:5}}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
@@ -494,7 +494,7 @@ export default function App() {
             </Card>
 
             <Card>
-              <Hdr>NPV Matrix ($M USD) — Lion + Nisk · {discountRate}% Discount · 15yr Life</Hdr>
+              <Hdr>NPV Matrix — Pre-Tax $M USD · Lion + Nisk · {discountRate}% Discount · 15yr Life</Hdr>
               <div style={{overflowX:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
                   <thead>
@@ -593,7 +593,7 @@ export default function App() {
 
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14,marginBottom:14}}>
             <Card>
-              <Hdr>Combined NPV vs. Copper Price — 12Mt @ 5.5% CuEq</Hdr>
+              <Hdr>Combined NPV (Pre-Tax) vs. Copper Price — 12Mt @ 5.5% CuEq</Hdr>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={cuSens} margin={{top:10,right:20,left:10,bottom:20}}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.border}/>
@@ -645,7 +645,7 @@ export default function App() {
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
                   <tr style={{borderBottom:`1px solid ${C.border}`}}>
-                    {["Cu Price","Rev/t Lion","Net/t Lion","NPV Combined","NAV/sh (C$)","Mkt Cap (C$)"].map(h=>(
+                    {["Cu Price","Rev/t Lion","Net/t Lion","NPV Combined (Pre-Tax)","NAV/sh (C$)","Mkt Cap (C$)"].map(h=>(
                       <th key={h} style={{color:C.muted,fontSize:11,padding:"6px 12px",textAlign:"left",fontWeight:600}}>{h}</th>
                     ))}
                   </tr>
@@ -930,6 +930,48 @@ export default function App() {
             </div>
             <div style={{marginTop:14,padding:12,background:"#0d1117",borderRadius:6,border:`1px solid ${C.border}`,fontSize:12,color:C.muted,lineHeight:1.7}}>
               <strong style={{color:C.text}}>Disclaimer:</strong> This model is for informational purposes only and does not constitute investment advice. All assumptions are analyst estimates unless otherwise noted. No PEA, PFS, or feasibility study has been published for the Lion or Nisk deposits. Actual results will differ materially from modelled scenarios.
+            </div>
+          </Card>
+
+          {/* Tax section */}
+          <Card style={{marginTop:14,border:`1px solid #ef535044`}}>
+            <Hdr style={{color:"#ef5350"}}>⚠ All NPV Figures Are Pre-Tax — Canadian Tax Context</Hdr>
+            <div style={{color:C.sub,fontSize:13,marginBottom:14,lineHeight:1.7}}>
+              No taxes, royalties, or mining duties are applied anywhere in this model. For a Quebec-based mining project, the following rates would materially reduce NPV:
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10,marginBottom:14}}>
+              {[
+                ["Federal Corporate Tax","15%","Applied to net mining income after deductions","#ef5350"],
+                ["Quebec Provincial Tax","11.5%","Combined fed+prov rate ~26.5%","#ef5350"],
+                ["Quebec Mining Duties","~16%","On annual mining profits (sliding scale)","#ff6f00"],
+                ["Combined Effective Rate","~35–40%","Approximate total burden on pre-tax NPV","#ef5350"],
+              ].map(([l,v,sub,c])=>(
+                <div key={l} style={{background:C.surface,borderRadius:6,padding:"12px 14px",border:`1px solid ${c}33`}}>
+                  <div style={{color:C.muted,fontSize:10,marginBottom:4}}>{l}</div>
+                  <div style={{color:c,fontWeight:800,fontSize:20}}>{v}</div>
+                  <div style={{color:C.muted,fontSize:11,marginTop:3}}>{sub}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10,marginBottom:14}}>
+              <div style={{background:"#1a0000",borderRadius:6,padding:"12px 14px",border:`1px solid #ef535044`}}>
+                <div style={{color:C.muted,fontSize:10,marginBottom:4}}>Estimated After-Tax NPV (base case)</div>
+                <div style={{color:"#ef5350",fontWeight:800,fontSize:20}}>~$1.5–1.7B</div>
+                <div style={{color:C.muted,fontSize:11,marginTop:3}}>12Mt @ 5.5% CuEq · 60–65% of pre-tax</div>
+              </div>
+              <div style={{background:"#1a0000",borderRadius:6,padding:"12px 14px",border:`1px solid #ef535044`}}>
+                <div style={{color:C.muted,fontSize:10,marginBottom:4}}>Est. After-Tax NAV/share (50% disc)</div>
+                <div style={{color:"#ef5350",fontWeight:800,fontSize:20}}>~C$4–5</div>
+                <div style={{color:C.muted,fontSize:11,marginTop:3}}>vs C$7.28 pre-tax · base case</div>
+              </div>
+              <div style={{background:"#1a0000",borderRadius:6,padding:"12px 14px",border:`1px solid #ef535044`}}>
+                <div style={{color:C.muted,fontSize:10,marginBottom:4}}>Tax shield / deductions</div>
+                <div style={{color:C.sub,fontWeight:700,fontSize:14}}>Partially offset</div>
+                <div style={{color:C.muted,fontSize:11,marginTop:3}}>Capex writeoffs, depletion allowances, and exploration credits reduce effective rate</div>
+              </div>
+            </div>
+            <div style={{padding:12,background:"#0d1117",borderRadius:6,border:`1px solid #ef535044`,fontSize:12,color:C.muted,lineHeight:1.7}}>
+              <strong style={{color:"#ef5350"}}>Important:</strong> After-tax NPV estimates above are rough approximations only. Actual tax liability depends on the corporate structure, debt financing, timing of capital deductions, exploration tax credits, and the specific mine plan. A proper after-tax model requires a formal tax opinion and full cash flow schedule. The after-tax figures here are illustrative only.
             </div>
           </Card>
 
