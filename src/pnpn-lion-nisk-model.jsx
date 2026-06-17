@@ -23,6 +23,7 @@ const LB=2204.62, OZ=31.1035; // g per troy oz (correct for g/t → oz/t convers
 const SHARES_M = 237.195816; // fully diluted shares (237,195,816)
 
 const DEF_P = { cu:4.50, au:3200, pd:1000, ag:32, pt:950, ni:7.00, co:12.00 };
+const TAX_RATE = 0.375; // ~37.5% effective: 26.5% fed+prov corporate + ~16% Quebec mining duties, partially offset by deductions
 
 function lionRevT(cueq, p) {
   const cu  = cueq * GRADE_RATIO.cu;
@@ -939,12 +940,14 @@ export default function App() {
             <div style={{color:C.sub,fontSize:13,marginBottom:14,lineHeight:1.7}}>
               No taxes, royalties, or mining duties are applied anywhere in this model. For a Quebec-based mining project, the following rates would materially reduce NPV:
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10,marginBottom:14}}>
+
+            {/* Tax rate breakdown */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10,marginBottom:16}}>
               {[
-                ["Federal Corporate Tax","15%","Applied to net mining income after deductions","#ef5350"],
-                ["Quebec Provincial Tax","11.5%","Combined fed+prov rate ~26.5%","#ef5350"],
-                ["Quebec Mining Duties","~16%","On annual mining profits (sliding scale)","#ff6f00"],
-                ["Combined Effective Rate","~35–40%","Approximate total burden on pre-tax NPV","#ef5350"],
+                ["Federal Corporate Tax","15%","On net mining income","#ef5350"],
+                ["Quebec Provincial Tax","11.5%","Fed + prov combined ~26.5%","#ef5350"],
+                ["Quebec Mining Duties","~16%","Sliding scale on mining profits","#ff6f00"],
+                ["Combined Effective Rate","~37.5%","Used for estimates below","#ef5350"],
               ].map(([l,v,sub,c])=>(
                 <div key={l} style={{background:C.surface,borderRadius:6,padding:"12px 14px",border:`1px solid ${c}33`}}>
                   <div style={{color:C.muted,fontSize:10,marginBottom:4}}>{l}</div>
@@ -953,25 +956,77 @@ export default function App() {
                 </div>
               ))}
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10,marginBottom:14}}>
-              <div style={{background:"#1a0000",borderRadius:6,padding:"12px 14px",border:`1px solid #ef535044`}}>
-                <div style={{color:C.muted,fontSize:10,marginBottom:4}}>Estimated After-Tax NPV (base case)</div>
-                <div style={{color:"#ef5350",fontWeight:800,fontSize:20}}>~$1.5–1.7B</div>
-                <div style={{color:C.muted,fontSize:11,marginTop:3}}>12Mt @ 5.5% CuEq · 60–65% of pre-tax</div>
+
+            {/* Dynamic selected scenario after-tax */}
+            <div style={{background:"#1a0000",border:`1px solid #ef535044`,borderRadius:6,padding:14,marginBottom:16}}>
+              <div style={{color:"#ef5350",fontWeight:700,fontSize:12,marginBottom:10}}>
+                ESTIMATED AFTER-TAX — Current Scenario: {selMt}Mt @ {selCuEq.toFixed(2)}% CuEq · {discountRate}% Discount · {navDiscount}% NAV Discount
               </div>
-              <div style={{background:"#1a0000",borderRadius:6,padding:"12px 14px",border:`1px solid #ef535044`}}>
-                <div style={{color:C.muted,fontSize:10,marginBottom:4}}>Est. After-Tax NAV/share (50% disc)</div>
-                <div style={{color:"#ef5350",fontWeight:800,fontSize:20}}>~C$4–5</div>
-                <div style={{color:C.muted,fontSize:11,marginTop:3}}>vs C$7.28 pre-tax · base case</div>
-              </div>
-              <div style={{background:"#1a0000",borderRadius:6,padding:"12px 14px",border:`1px solid #ef535044`}}>
-                <div style={{color:C.muted,fontSize:10,marginBottom:4}}>Tax shield / deductions</div>
-                <div style={{color:C.sub,fontWeight:700,fontSize:14}}>Partially offset</div>
-                <div style={{color:C.muted,fontSize:11,marginTop:3}}>Capex writeoffs, depletion allowances, and exploration credits reduce effective rate</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10}}>
+                {[
+                  ["Lion NPV (after-tax)", "$"+(selLNPV*(1-TAX_RATE)).toFixed(0)+"M", C.copper],
+                  ["Nisk NPV (after-tax)", (niskN*(1-TAX_RATE)>=0?"$":"−$")+Math.abs(niskN*(1-TAX_RATE)).toFixed(0)+"M", niskN>=0?C.sky:"#ef5350"],
+                  ["Combined (after-tax)", "$"+(selTot*(1-TAX_RATE)).toFixed(0)+"M", C.sage],
+                  ["NAV/share (after-tax)", "C$"+(selTot*(1-TAX_RATE)/SHARES_M/0.73*(1-navDiscount/100)).toFixed(2), C.gold],
+                  ["Pre-tax for reference", "$"+selTot.toFixed(0)+"M", C.muted],
+                  ["Tax applied (37.5%)", "−$"+(selTot*TAX_RATE).toFixed(0)+"M", "#ef5350"],
+                ].map(([l,v,c])=>(
+                  <div key={l} style={{background:"#0d0000",borderRadius:6,padding:"10px 12px"}}>
+                    <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
+                    <div style={{color:c,fontWeight:700,fontSize:15}}>{v}</div>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {/* After-tax matrix */}
+            <div style={{marginBottom:14}}>
+              <div style={{color:C.sub,fontWeight:700,fontSize:11,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>
+                After-Tax NPV Matrix ($M USD) — {discountRate}% Discount · Current Metal Prices · {navDiscount}% NAV Discount
+              </div>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
+                  <thead>
+                    <tr>
+                      <th style={{color:C.muted,fontSize:11,padding:"6px 10px",textAlign:"left",fontWeight:600}}>Mt ↓ / CuEq →</th>
+                      {CUEQ_VALS.map(c=>(
+                        <th key={c} style={{color:"#ff6f00",fontSize:12,padding:"6px 10px",textAlign:"center",fontWeight:700}}>{c}%</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matrix.map((row)=>(
+                      <tr key={row.mt}>
+                        <td style={{color:C.copper,fontWeight:700,fontSize:13,padding:"6px 10px"}}>{row.mt}Mt</td>
+                        {CUEQ_VALS.map(c=>{
+                          const atPre = row[c];
+                          const at = +(atPre*(1-TAX_RATE)).toFixed(0);
+                          const atNav = +(at/SHARES_M/0.73*(1-navDiscount/100)).toFixed(2);
+                          const isSelected = row.mt===selMt && Math.abs(c-selCuEq)<0.01;
+                          return (
+                            <td key={c} onClick={()=>{setSelMt(row.mt);setSelCuEq(c);setTab("mre");}}
+                              style={{
+                                background:npvColor(atPre),
+                                border:isSelected?`2px solid ${C.gold}`:`2px solid transparent`,
+                                borderRadius:6,padding:"8px 10px",textAlign:"center",cursor:"pointer",
+                              }}>
+                              <div style={{color:"#fff",fontWeight:700,fontSize:13}}>${at.toLocaleString()}M</div>
+                              <div style={{color:"rgba(255,255,255,0.6)",fontSize:10}}>C${atNav}/sh</div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{color:C.muted,fontSize:11,marginTop:6}}>
+                Click any cell to load that scenario. Pre-tax equivalents shown in the NPV Matrix tab. Color scale based on pre-tax NPV for consistency.
+              </div>
+            </div>
+
             <div style={{padding:12,background:"#0d1117",borderRadius:6,border:`1px solid #ef535044`,fontSize:12,color:C.muted,lineHeight:1.7}}>
-              <strong style={{color:"#ef5350"}}>Important:</strong> After-tax NPV estimates above are rough approximations only. Actual tax liability depends on the corporate structure, debt financing, timing of capital deductions, exploration tax credits, and the specific mine plan. A proper after-tax model requires a formal tax opinion and full cash flow schedule. The after-tax figures here are illustrative only.
+              <strong style={{color:"#ef5350"}}>Important:</strong> After-tax estimates use a flat 37.5% effective rate for illustration. Actual tax liability depends on corporate structure, debt financing, timing of capital deductions, exploration tax credits, and the specific mine plan. A proper after-tax model requires a formal tax opinion and full cash flow schedule.
             </div>
           </Card>
 
