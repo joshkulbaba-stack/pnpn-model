@@ -429,6 +429,64 @@ export default function App() {
                 />
                 <div style={{color:C.muted,fontSize:10,marginTop:4}}>{sharesM.toFixed(3)}M shares = {(sharesM*1e6).toLocaleString()} shares</div>
               </div>
+              {/* After-tax matrix */}
+              <div style={{background:"#0d1117",border:`1px solid #ef535044`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{color:"#ef5350",fontWeight:700,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:8}}>
+                  Estimated After-Tax — {selMt}Mt @ {selCuEq.toFixed(2)}% CuEq · {discountRate}% Disc · {navDiscount}% NAV Disc
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginBottom:12}}>
+                  {[
+                    ["Lion (after-tax)", "$"+(selLNPV*(1-TAX_RATE)).toFixed(0)+"M", C.copper],
+                    ["Nisk (after-tax)", (niskN*(1-TAX_RATE)>=0?"$":"−$")+Math.abs(niskN*(1-TAX_RATE)).toFixed(0)+"M", niskN>=0?C.sky:"#ef5350"],
+                    ["Combined (after-tax)", "$"+(selTot*(1-TAX_RATE)).toFixed(0)+"M", C.sage],
+                    ["NAV/share (after-tax)", "C$"+(selTot*(1-TAX_RATE)/sharesM/0.73*(1-navDiscount/100)).toFixed(2), C.gold],
+                  ].map(([l,v,c])=>(
+                    <div key={l} style={{background:"#1a0000",borderRadius:6,padding:"8px 10px"}}>
+                      <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
+                      <div style={{color:c,fontWeight:700,fontSize:14}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{color:C.sub,fontWeight:700,fontSize:10,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>
+                  After-Tax NPV Matrix ($M USD) — {discountRate}% Discount · Current Metal Prices · {navDiscount}% NAV Discount
+                </div>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
+                    <thead>
+                      <tr>
+                        <th style={{color:C.muted,fontSize:10,padding:"4px 8px",textAlign:"left",fontWeight:600}}>Mt ↓ / CuEq →</th>
+                        {CUEQ_VALS.map(c=>(
+                          <th key={c} style={{color:"#ff6f00",fontSize:11,padding:"4px 8px",textAlign:"center",fontWeight:700}}>{c}%</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {matrix.map((row)=>(
+                        <tr key={row.mt}>
+                          <td style={{color:C.copper,fontWeight:700,fontSize:12,padding:"4px 8px"}}>{row.mt}Mt</td>
+                          {CUEQ_VALS.map(c=>{
+                            const at = +(row[c]*(1-TAX_RATE)).toFixed(0);
+                            const atNav = +(at/sharesM/0.73*(1-navDiscount/100)).toFixed(2);
+                            const isSelected = row.mt===selMt && Math.abs(c-selCuEq)<0.01;
+                            return (
+                              <td key={c} onClick={()=>{setSelMt(row.mt);setSelCuEq(c);}}
+                                style={{
+                                  background:npvColor(row[c]),
+                                  border:isSelected?`2px solid ${C.gold}`:`2px solid transparent`,
+                                  borderRadius:6,padding:"6px 8px",textAlign:"center",cursor:"pointer",
+                                }}>
+                                <div style={{color:"#fff",fontWeight:700,fontSize:12}}>${at.toLocaleString()}M</div>
+                                <div style={{color:"rgba(255,255,255,0.6)",fontSize:9}}>C${atNav}/sh</div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{color:C.muted,fontSize:10,marginTop:6}}>37.5% effective tax rate (fed + prov + mining duties). Pre-tax matrix in NPV Matrix tab.</div>
+              </div>
               <div style={{background:C.surface,borderRadius:6,padding:12}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:8}}>Contained metal ({selMt}Mt)</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
@@ -968,101 +1026,6 @@ export default function App() {
             </div>
           </Card>
 
-          {/* Tax section */}
-          <Card style={{marginTop:14,border:`1px solid #ef535044`}}>
-            <Hdr style={{color:"#ef5350"}}>⚠ All NPV Figures Are Pre-Tax — Canadian Tax Context</Hdr>
-            <div style={{color:C.sub,fontSize:13,marginBottom:14,lineHeight:1.7}}>
-              No taxes, royalties, or mining duties are applied anywhere in this model. For a Quebec-based mining project, the following rates would materially reduce NPV:
-            </div>
-
-            {/* Tax rate breakdown */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10,marginBottom:16}}>
-              {[
-                ["Federal Corporate Tax","15%","On net mining income","#ef5350"],
-                ["Quebec Provincial Tax","11.5%","Fed + prov combined ~26.5%","#ef5350"],
-                ["Quebec Mining Duties","~16%","Sliding scale on mining profits","#ff6f00"],
-                ["Combined Effective Rate","~37.5%","Used for estimates below","#ef5350"],
-              ].map(([l,v,sub,c])=>(
-                <div key={l} style={{background:C.surface,borderRadius:6,padding:"12px 14px",border:`1px solid ${c}33`}}>
-                  <div style={{color:C.muted,fontSize:10,marginBottom:4}}>{l}</div>
-                  <div style={{color:c,fontWeight:800,fontSize:20}}>{v}</div>
-                  <div style={{color:C.muted,fontSize:11,marginTop:3}}>{sub}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Dynamic selected scenario after-tax */}
-            <div style={{background:"#1a0000",border:`1px solid #ef535044`,borderRadius:6,padding:14,marginBottom:16}}>
-              <div style={{color:"#ef5350",fontWeight:700,fontSize:12,marginBottom:10}}>
-                ESTIMATED AFTER-TAX — Current Scenario: {selMt}Mt @ {selCuEq.toFixed(2)}% CuEq · {discountRate}% Discount · {navDiscount}% NAV Discount
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10}}>
-                {[
-                  ["Lion NPV (after-tax)", "$"+(selLNPV*(1-TAX_RATE)).toFixed(0)+"M", C.copper],
-                  ["Nisk NPV (after-tax)", (niskN*(1-TAX_RATE)>=0?"$":"−$")+Math.abs(niskN*(1-TAX_RATE)).toFixed(0)+"M", niskN>=0?C.sky:"#ef5350"],
-                  ["Combined (after-tax)", "$"+(selTot*(1-TAX_RATE)).toFixed(0)+"M", C.sage],
-                  ["NAV/share (after-tax)", "C$"+(selTot*(1-TAX_RATE)/sharesM/0.73*(1-navDiscount/100)).toFixed(2), C.gold],
-                  ["Pre-tax for reference", "$"+selTot.toFixed(0)+"M", C.muted],
-                  ["Tax applied (37.5%)", "−$"+(selTot*TAX_RATE).toFixed(0)+"M", "#ef5350"],
-                ].map(([l,v,c])=>(
-                  <div key={l} style={{background:"#0d0000",borderRadius:6,padding:"10px 12px"}}>
-                    <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{l}</div>
-                    <div style={{color:c,fontWeight:700,fontSize:15}}>{v}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* After-tax matrix */}
-            <div style={{marginBottom:14}}>
-              <div style={{color:C.sub,fontWeight:700,fontSize:11,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>
-                After-Tax NPV Matrix ($M USD) — {discountRate}% Discount · Current Metal Prices · {navDiscount}% NAV Discount
-              </div>
-              <div style={{overflowX:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
-                  <thead>
-                    <tr>
-                      <th style={{color:C.muted,fontSize:11,padding:"6px 10px",textAlign:"left",fontWeight:600}}>Mt ↓ / CuEq →</th>
-                      {CUEQ_VALS.map(c=>(
-                        <th key={c} style={{color:"#ff6f00",fontSize:12,padding:"6px 10px",textAlign:"center",fontWeight:700}}>{c}%</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {matrix.map((row)=>(
-                      <tr key={row.mt}>
-                        <td style={{color:C.copper,fontWeight:700,fontSize:13,padding:"6px 10px"}}>{row.mt}Mt</td>
-                        {CUEQ_VALS.map(c=>{
-                          const atPre = row[c];
-                          const at = +(atPre*(1-TAX_RATE)).toFixed(0);
-                          const atNav = +(at/sharesM/0.73*(1-navDiscount/100)).toFixed(2);
-                          const isSelected = row.mt===selMt && Math.abs(c-selCuEq)<0.01;
-                          return (
-                            <td key={c} onClick={()=>{setSelMt(row.mt);setSelCuEq(c);setTab("mre");}}
-                              style={{
-                                background:npvColor(atPre),
-                                border:isSelected?`2px solid ${C.gold}`:`2px solid transparent`,
-                                borderRadius:6,padding:"8px 10px",textAlign:"center",cursor:"pointer",
-                              }}>
-                              <div style={{color:"#fff",fontWeight:700,fontSize:13}}>${at.toLocaleString()}M</div>
-                              <div style={{color:"rgba(255,255,255,0.6)",fontSize:10}}>C${atNav}/sh</div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{color:C.muted,fontSize:11,marginTop:6}}>
-                Click any cell to load that scenario. Pre-tax equivalents shown in the NPV Matrix tab. Color scale based on pre-tax NPV for consistency.
-              </div>
-            </div>
-
-            <div style={{padding:12,background:"#0d1117",borderRadius:6,border:`1px solid #ef535044`,fontSize:12,color:C.muted,lineHeight:1.7}}>
-              <strong style={{color:"#ef5350"}}>Important:</strong> After-tax estimates use a flat 37.5% effective rate for illustration. Actual tax liability depends on corporate structure, debt financing, timing of capital deductions, exploration tax credits, and the specific mine plan. A proper after-tax model requires a formal tax opinion and full cash flow schedule.
-            </div>
-          </Card>
 
         </div>
       )}
