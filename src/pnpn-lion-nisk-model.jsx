@@ -74,12 +74,12 @@ function buildMatrix(p, niskAddon, rate=0.08, life=15) {
 }
 
 // Cu price sensitivity at 12Mt / 5.5%
-function buildCuSens(p, niskAddon, rate=0.08, life=15) {
+function buildCuSens(p, niskAddon, rate=0.08, life=15, shares=306) {
   return [3.00,3.50,4.00,4.50,5.00,5.50,6.00,6.56].map(cu => {
     const pp = {...p, cu};
     const lRev = lionRevT(5.5, pp);
     const n = calcNPV(lRev, 28, 12e6, 440, rate, life) + niskAddon;
-    const perSh = n/SHARES_M/0.73;
+    const perSh = n/shares/0.73;
     return { cu: `$${cu.toFixed(2)}`, npv: +n.toFixed(0), perSh: +perSh.toFixed(2) };
   });
 }
@@ -150,15 +150,17 @@ export default function App() {
   const [navDiscount, setNavDiscount] = useState(50);
   const [discountRate, setDiscountRate] = useState(8);
   const [mineLife, setMineLife] = useState(15);
+  const [sharesInput, setSharesInput] = useState("306");
+  const sharesM = Math.max(1, parseFloat(sharesInput.replace(/,/g,"")) || 306);
 
   const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
   const matrix  = useMemo(()=>buildMatrix(p,niskN,discountRate/100,mineLife),[p,niskN,discountRate,mineLife]);
-  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100,mineLife),[p,niskN,discountRate,mineLife]);
+  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100,mineLife,sharesM),[p,niskN,discountRate,mineLife,sharesM]);
 
   const selRev  = useMemo(()=>lionRevT(selCuEq,p),[selCuEq,p]);
   const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife),[selRev,selMt,discountRate,mineLife]);
   const selTot  = selLNPV + niskN;
-  const selPerSh = selTot / SHARES_M / 0.73 * (1 - navDiscount/100); // USD->CAD, risked
+  const selPerSh = selTot / sharesM / 0.73 * (1 - navDiscount/100); // USD->CAD, risked
 
   // Implied grades at selected CuEq
   const impl = {
@@ -413,6 +415,20 @@ export default function App() {
                   ))}
                 </div>
               </div>
+              <div style={{background:"#1a1000",border:`1px solid ${C.gold}44`,borderRadius:6,padding:12,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={{color:C.gold,fontSize:12,fontWeight:700}}>Fully Diluted Shares (M)</span>
+                  <span style={{color:C.muted,fontSize:10}}>e.g. 306 = 306,000,000</span>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  value={sharesInput}
+                  onChange={e=>setSharesInput(e.target.value)}
+                  style={{width:"100%",background:"#0d1a2a",border:`1px solid ${C.gold}88`,borderRadius:4,color:C.gold,fontSize:16,fontWeight:700,padding:"6px 10px",boxSizing:"border-box",outline:"none"}}
+                />
+                <div style={{color:C.muted,fontSize:10,marginTop:4}}>{sharesM.toFixed(3)}M shares = {(sharesM*1e6).toLocaleString()} shares</div>
+              </div>
               <div style={{background:C.surface,borderRadius:6,padding:12}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:8}}>Contained metal ({selMt}Mt)</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
@@ -456,7 +472,7 @@ export default function App() {
                     const capex=400+(mt-10)*20;
                     const lRev=lionRevT(cueq,p);
                     const n=calcNPV(lRev,28,mt*1e6,capex)+niskN;
-                    pts.push({cueq,nav:+(n/SHARES_M/0.73).toFixed(2),mt});
+                    pts.push({cueq,nav:+(n/sharesM/0.73).toFixed(2),mt});
                   }
                   return <Line key={mt} data={pts} dataKey="nav" name={`${mt}Mt`}
                     stroke={clrs[mi]} dot={false} strokeWidth={2}/>;
@@ -546,7 +562,7 @@ export default function App() {
                                 Lion ${lv.toLocaleString()}M · Nisk ${nv.toLocaleString()}M
                               </div>
                               <div style={{color:"rgba(255,255,255,0.6)",fontSize:10}}>
-                                C${(v/SHARES_M/0.73).toFixed(2)}/sh
+                                C${(v/sharesM/0.73).toFixed(2)}/sh
                               </div>
                             </td>
                           );
@@ -689,7 +705,7 @@ export default function App() {
               </table>
             </div>
             <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-              ~237.2M diluted shares · USD/CAD 0.73 · {discountRate}% discount · {mineLife}yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
+              ~{sharesM.toFixed(1)}M diluted shares · USD/CAD 0.73 · {discountRate}% discount · {mineLife}yr life · $28/t opex (Lion open pit) · $55/t (Nisk UG) · CAPEX $650M combined
             </div>
           </Card>
         </div>
@@ -985,7 +1001,7 @@ export default function App() {
                   ["Lion NPV (after-tax)", "$"+(selLNPV*(1-TAX_RATE)).toFixed(0)+"M", C.copper],
                   ["Nisk NPV (after-tax)", (niskN*(1-TAX_RATE)>=0?"$":"−$")+Math.abs(niskN*(1-TAX_RATE)).toFixed(0)+"M", niskN>=0?C.sky:"#ef5350"],
                   ["Combined (after-tax)", "$"+(selTot*(1-TAX_RATE)).toFixed(0)+"M", C.sage],
-                  ["NAV/share (after-tax)", "C$"+(selTot*(1-TAX_RATE)/SHARES_M/0.73*(1-navDiscount/100)).toFixed(2), C.gold],
+                  ["NAV/share (after-tax)", "C$"+(selTot*(1-TAX_RATE)/sharesM/0.73*(1-navDiscount/100)).toFixed(2), C.gold],
                   ["Pre-tax for reference", "$"+selTot.toFixed(0)+"M", C.muted],
                   ["Tax applied (37.5%)", "−$"+(selTot*TAX_RATE).toFixed(0)+"M", "#ef5350"],
                 ].map(([l,v,c])=>(
@@ -1019,7 +1035,7 @@ export default function App() {
                         {CUEQ_VALS.map(c=>{
                           const atPre = row[c];
                           const at = +(atPre*(1-TAX_RATE)).toFixed(0);
-                          const atNav = +(at/SHARES_M/0.73*(1-navDiscount/100)).toFixed(2);
+                          const atNav = +(at/sharesM/0.73*(1-navDiscount/100)).toFixed(2);
                           const isSelected = row.mt===selMt && Math.abs(c-selCuEq)<0.01;
                           return (
                             <td key={c} onClick={()=>{setSelMt(row.mt);setSelCuEq(c);setTab("mre");}}
