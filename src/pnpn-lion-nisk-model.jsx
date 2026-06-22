@@ -232,6 +232,7 @@ export default function App() {
   const [newsFetching, setNewsFetching] = useState(false);
   const [scenarios, setScenarios] = useState([]);
   const [scenarioNameInput, setScenarioNameInput] = useState("");
+  const [includeNisk, setIncludeNisk] = useState(true);
 
   useEffect(()=>{
     // Fetch trading data — try query1 then query2, both proxies
@@ -280,13 +281,14 @@ export default function App() {
       .finally(()=>setNewsFetching(false));
   },[]);
 
-  const niskN   = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
-  const matrix  = useMemo(()=>buildMatrix(p,niskN,discountRate/100,mineLife),[p,niskN,discountRate,mineLife]);
-  const cuSens  = useMemo(()=>buildCuSens(p,niskN,discountRate/100,mineLife,sharesM,fx),[p,niskN,discountRate,mineLife,sharesM,fx]);
+  const niskN       = useMemo(()=>calcNPV(niskRevT(p),55,5.43e6,250,discountRate/100,mineLife),[p,discountRate,mineLife]);
+  const activeNiskN = includeNisk ? niskN : 0;
+  const matrix  = useMemo(()=>buildMatrix(p,activeNiskN,discountRate/100,mineLife),[p,activeNiskN,discountRate,mineLife]);
+  const cuSens  = useMemo(()=>buildCuSens(p,activeNiskN,discountRate/100,mineLife,sharesM,fx),[p,activeNiskN,discountRate,mineLife,sharesM,fx]);
 
   const selRev  = useMemo(()=>lionRevT(selCuEq,p),[selCuEq,p]);
   const selLNPV = useMemo(()=>calcNPV(selRev,28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife),[selRev,selMt,discountRate,mineLife]);
-  const selTot  = selLNPV + niskN;
+  const selTot  = selLNPV + activeNiskN;
   const selPerSh = selTot / sharesM / fx * (1 - navDiscount/100); // USD->CAD, risked
 
   // Implied grades at selected CuEq
@@ -349,12 +351,12 @@ export default function App() {
   const beTargetNAV = bePrice * sharesM * fx / (1 - navDiscount/100);
   // implied Cu price
   const beCu = useMemo(()=>beSolve(beTargetNAV,
-    cu=>{ const pp={...p,cu}; return calcNPV(lionRevT(selCuEq,pp),28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife)+calcNPV(niskRevT(pp),55,5.43e6,250,discountRate/100,mineLife); },
+    cu=>{ const pp={...p,cu}; return calcNPV(lionRevT(selCuEq,pp),28,selMt*1e6,400+(selMt-10)*20,discountRate/100,mineLife)+(includeNisk?calcNPV(niskRevT(pp),55,5.43e6,250,discountRate/100,mineLife):0); },
     0.5,30),
   [beTargetNAV,p,selCuEq,selMt,discountRate,mineLife]);
   // implied tonnage
   const beMt = useMemo(()=>beSolve(beTargetNAV,
-    mt=>calcNPV(lionRevT(selCuEq,p),28,mt*1e6,400+(mt-10)*20,discountRate/100,mineLife)+niskN,
+    mt=>calcNPV(lionRevT(selCuEq,p),28,mt*1e6,400+(mt-10)*20,discountRate/100,mineLife)+activeNiskN,
     1,50),
   [beTargetNAV,p,selCuEq,discountRate,mineLife,niskN]);
   // implied CuEq grade
@@ -452,7 +454,7 @@ export default function App() {
               Discord
             </a>
             <Tag c={C.copper}>Lion CuEq</Tag>
-            <Tag c={C.sky}>+Nisk NPV</Tag>
+            {includeNisk && <Tag c={C.sky}>+Nisk NPV</Tag>}
             <Tag c="#ff6f00">Analyst Range</Tag>
           </div>
         </div>
@@ -590,12 +592,22 @@ export default function App() {
             </Card>
 
             <Card>
-              <Hdr>Scenario Output</Hdr>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <Hdr style={{margin:0}}>Scenario Output</Hdr>
+                <button onClick={()=>setIncludeNisk(v=>!v)} style={{
+                  fontSize:11,padding:"3px 10px",borderRadius:12,border:"1px solid",cursor:"pointer",
+                  background:includeNisk?C.sky:"transparent",
+                  color:includeNisk?"#fff":C.muted,
+                  borderColor:includeNisk?C.sky:C.border,
+                }}>
+                  {includeNisk?"+ Nisk":"Lion only"}
+                </button>
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:14,marginBottom:14}}>
                 <Kpi label={`Lion NPV — Pre-Tax (${discountRate}%)`} value={"$"+selLNPV.toFixed(0)} unit="M" color={C.copper} big/>
-                <Kpi label={`Nisk NPV — Pre-Tax (${discountRate}%)`} value={(niskN>=0?"$":"−$")+Math.abs(niskN).toFixed(0)} unit="M" color={niskN>=0?C.sky:"#ef5350"} big
-                  sub={`Ni $${p.ni}/lb · Rev $${niskRevT(p).toFixed(0)}/t vs $55 opex`}/>
-                <Kpi label="Combined NPV (Pre-Tax)" value={"$"+selTot.toFixed(0)} unit="M" color={C.sage}/>
+                {includeNisk && <Kpi label={`Nisk NPV — Pre-Tax (${discountRate}%)`} value={(niskN>=0?"$":"−$")+Math.abs(niskN).toFixed(0)} unit="M" color={niskN>=0?C.sky:"#ef5350"} big
+                  sub={`Ni $${p.ni}/lb · Rev $${niskRevT(p).toFixed(0)}/t vs $55 opex`}/>}
+                <Kpi label={includeNisk?"Combined NPV (Pre-Tax)":"Lion NPV (Pre-Tax)"} value={"$"+selTot.toFixed(0)} unit="M" color={C.sage}/>
                 <Kpi label={`NAV/share (${navDiscount}% risked)`} value={"C$"+selPerSh.toFixed(2)} color={C.gold}
                   sub={`${sharesM.toFixed(1)}M dil. shares · ${fx.toFixed(2)} FX`}/>
                 <Kpi label="Gross Rev/t (Lion)" value={"$"+selRev.toFixed(0)} unit="USD/t" color={C.copper}
@@ -899,8 +911,8 @@ export default function App() {
               <Slider label="Platinum (USD/oz)"  field="pt" min={600}  max={3000} step={100}  unit="$" dp={0}/>
               <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:6}}>
                 <div style={{color:C.muted,fontSize:11,marginBottom:4}}>Nisk add-on NPV</div>
-                <div style={{color:C.sky,fontWeight:700,fontSize:16}}>${niskN.toFixed(0)}M</div>
-                <div style={{color:C.muted,fontSize:11}}>Included in all cells</div>
+                <div style={{color:includeNisk?C.sky:C.muted,fontWeight:700,fontSize:16}}>${niskN.toFixed(0)}M</div>
+                <div style={{color:C.muted,fontSize:11}}>{includeNisk?"Included in all cells":"Excluded (toggle on MRE tab)"}</div>
               </div>
             </Card>
 
@@ -955,7 +967,7 @@ export default function App() {
                 ))}
               </div>
               <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-                Click any cell to load that scenario in the MRE Range tab. All values include Nisk add-on NPV (${niskN.toFixed(0)}M at current prices). Capex: $400M base +$20M/Mt over 10Mt. OPEX: $28/t Lion, $55/t Nisk.
+                Click any cell to load that scenario in the MRE Range tab. {includeNisk?`All values include Nisk add-on NPV ($${niskN.toFixed(0)}M at current prices). `:"Lion-only (Nisk excluded). "}Capex: $400M base +$20M/Mt over 10Mt. OPEX: $28/t Lion{includeNisk?", $55/t Nisk":""}.
               </div>
             </Card>
           </div>
@@ -1497,7 +1509,7 @@ export default function App() {
                 </table>
               </div>
               <div style={{color:C.muted,fontSize:11,marginTop:8}}>
-                Includes Nisk add-on NPV (${niskN.toFixed(0)}M at current prices). Gold border = base case. FX: {fx.toFixed(2)}. NAV discount: {navDiscount}%.
+                {includeNisk?`Includes Nisk add-on NPV ($${niskN.toFixed(0)}M at current prices). `:"Lion-only (Nisk excluded). "}Gold border = base case. FX: {fx.toFixed(2)}. NAV discount: {navDiscount}%.
               </div>
             </Card>
           </div>
